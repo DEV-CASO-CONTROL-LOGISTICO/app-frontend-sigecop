@@ -1,12 +1,12 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { SessionService } from '../../service/security/session.service';
 import Swal from 'sweetalert2';
 import { HTTP_STATUS } from '../../util/constant';
 import { StorageService } from '../../service/util/storage.service';
 import { CommonModule } from '@angular/common';
 import { UserResponse } from '../../model/api/response/UserResponse';
 import { Pagina } from '../../model/dto/Pagina';
+import { parseJwt } from '../../util/methods';
 
 @Component({
   selector: 'app-dashboard',
@@ -19,41 +19,14 @@ export class DashboardComponent implements OnInit {
   user: UserResponse = {};
   isSidebarCollapsed = false;
 
-  constructor(private router: Router, private sessionService: SessionService, private storageService: StorageService) { }
+  constructor(
+    private router: Router,
+    private storageService: StorageService) { }
 
   ngOnInit() {
-    setTimeout(() => {
-      this.sessionService.infoSession().subscribe(
-        (result: UserResponse) => {
-          this.user = result;
-          this.paginas = result.paginas ?? [];
-        },
-        (err: any) => {
-          switch (err.status) {
-            case HTTP_STATUS.UNAUTHORIZED:
-              Swal.close();
-              Swal.fire({
-                icon: 'error',
-                title: "Error de validación de sesión, inicie sesión de nuevo porfavor",
-                confirmButtonText: "Aceptar",
-              }).then((result) => {
-                if (result.isConfirmed) {
-                  this.logout();
-                }
-              });
-              break;
-            default:
-              Swal.close();
-              Swal.fire({
-                icon: 'warning',
-                title: '¡Advertencia!',
-                text: err.error,
-              });
-              break;
-          }
-        }
-      );
-    });
+    let session = this.storageService.getUserSession();
+    this.user = session;
+    this.paginas = session.paginas ?? [];
   }
 
   toggleSidebar() {

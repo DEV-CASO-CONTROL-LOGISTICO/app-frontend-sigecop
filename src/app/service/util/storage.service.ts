@@ -1,5 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { parseJwt } from '../../util/methods';
+import { UserResponse } from '../../model/api/response/UserResponse';
 
 @Injectable({
   providedIn: 'root'
@@ -32,8 +34,6 @@ export class StorageService {
     }
   }
 
-
-  // Métodos propios de token
   verificarSession(): boolean | undefined {
     if (isPlatformBrowser(this.platformId)) {
       return !!localStorage.getItem("token");
@@ -43,6 +43,10 @@ export class StorageService {
 
   getToken(): string | null {
     return this.getItem("token");
+  }
+
+  getUserSession(): UserResponse {
+    return parseJwt(this.getToken());
   }
 
   updateSession(token: string): void {

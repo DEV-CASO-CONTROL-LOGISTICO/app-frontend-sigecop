@@ -4,7 +4,6 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { AuthService } from '../../service/security/auth.service';
 import { CommonModule } from '@angular/common';
 import { NgxPaginationModule } from 'ngx-pagination';
-import { HttpClientModule } from '@angular/common/http';
 import { HTTP_STATUS } from '../../util/constant';
 import Swal from 'sweetalert2';
 import { StorageService } from '../../service/util/storage.service';
@@ -21,7 +20,10 @@ export class LoginComponent {
   userRequest: UserRequest = {} as UserRequest;
   userForm: FormGroup;
 
-  constructor(private router: Router, private authService: AuthService, private storageService: StorageService) {
+  constructor(
+    private router: Router,
+    private authService: AuthService,
+    private storageService: StorageService) {
     this.userForm = new FormGroup({
       login: new FormControl('', [Validators.required]),
       clave: new FormControl('', [Validators.required]),
@@ -42,7 +44,7 @@ export class LoginComponent {
     this.authService.login(this.userRequest).subscribe(
       (result: any) => {
         this.storageService.updateSession(result?.object);
-        this.router.navigate(['/Home']);
+        this.router.navigate(['/home']);
       },
       (err: any) => {
         switch (err.status) {

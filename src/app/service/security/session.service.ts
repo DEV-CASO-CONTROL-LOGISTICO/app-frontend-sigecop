@@ -11,7 +11,7 @@ import { UserResponse } from '../../model/api/response/UserResponse';
 export class SessionService {
   constructor(private http: HttpClient, private storageService: StorageService) { }
 
-  infoSession(): Observable<UserResponse> {
+  /*infoSession(): Observable<UserResponse> {
     return this.http.post<UserResponse>(`${BASE_URL}/session/getInfoSession`, {});
-  }
+  }*/
 }
