@@ -34,6 +34,7 @@ export class CotizacionService {
     aprobar(filter: CotizacionRequest): Observable<any> {
         return this.http.post<any>(`${BASE_URL}/cotizacion/aprobar`, filter);
     }
+    
     archivar(filter: CotizacionRequest): Observable<any> {
         return this.http.post<any>(`${BASE_URL}/cotizacion/archivar`, filter);
     }

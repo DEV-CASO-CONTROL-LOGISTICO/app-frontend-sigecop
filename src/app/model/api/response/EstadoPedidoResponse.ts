@@ -1,7 +1,6 @@
 import { ClassGeneric } from "../../../util/ClassGeneric";
 
-
-export class EstadoSolicitudResponse extends ClassGeneric {
+export class EstadoPedidoResponse extends ClassGeneric {
     id?: number;
     descripcion?: string;
     detalle?: string;
