@@ -2,9 +2,9 @@ import { ClassGeneric } from "../../../util/ClassGeneric";
 import { PedidoProductoRequest } from "./PedidoProductoRequest";
 
 
-export class PedidodRequest extends ClassGeneric{
+export class PedidoRequest extends ClassGeneric{
 
-    id?: number;
+    pedidoId?: number;
     codigo?: String;
     proveedor?: number;
     estadoId?: number;  

@@ -234,6 +234,7 @@ export class SolicitudComponent implements OnInit {
             }
         });
     }
+    
     aprobarCotizacion(item: CotizacionResponse) {
         Swal.fire({
             title: 'Confirmar aprobar',
