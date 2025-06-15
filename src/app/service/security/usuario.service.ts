@@ -25,6 +25,8 @@ export class UsuarioService {
       body: filter
     });
   }
-
+  find(filter: UserRequest): Observable<UserResponse> {
+    return this.http.post<UserResponse>(`${BASE_URL}/usuario/find`, filter);
+  }
 
 }

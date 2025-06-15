@@ -25,6 +25,9 @@ import { ProductoService } from '../../service/master/producto.service';
 import { RegexConstants } from '../../util/constant';
 import { CotizacionResponse } from '../../model/api/response/CotizacionResponse';
 import { CotizacionService } from '../../service/gestion/cotizacion.service';
+import { StorageService } from '../../service/util/storage.service';
+import { UsuarioService } from '../../service/security/usuario.service';
+import { UserResponse } from '../../model/api/response/UserResponse';
 
 @Component({
   selector: 'app-solicitud-proveedor',
@@ -59,7 +62,10 @@ export class SolicitudProveedorComponent {
     selectedProductos: SolicitudProductoRequest[] = [];
     selectedProveedores: number[] = [];
     listCotizaciones: CotizacionResponse[] = [];
+    user: UserResponse = {};
+    session: UserResponse = {};
 
+    @ViewChild('colEstadoTemplate', { static: true }) colEstadoTemplate!: TemplateRef<any>;
     @ViewChild('colAccionTemplate', { static: true }) colAccionTemplate!: TemplateRef<any>;
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate!: TemplateRef<any>;
 
@@ -73,23 +79,30 @@ export class SolicitudProveedorComponent {
         private proveedorService: ProveedorService,
         private productoService: ProductoService,
         private cotizacionService: CotizacionService,
-        private cdr: ChangeDetectorRef
+        private cdr: ChangeDetectorRef,
+        private storageService: StorageService,
+        private usuarioService: UsuarioService
     ) { }
 
     ngOnInit() {
+        this.session = this.storageService.getUserSession(); 
+        //this.user = session;
         this.loadInitialData();
     }
 
     loadInitialData() {
+        console.log('Buscando solicitudes para el session:', this.session);
         forkJoin({
             estados: this.estadoService.list({}),
             proveedores: this.proveedorService.list({}),
-            productos: this.productoService.list({})
+            productos: this.productoService.list({}),
+            user : this.usuarioService.find({ id: this.session.id })
         }).subscribe({
-            next: ({ estados, proveedores, productos }) => {
+            next: ({ estados, proveedores, productos,user }) => {
                 this.listEstados = estados;
                 this.listProveedores = proveedores;
                 this.listProductos = productos;
+                this.user = user;
                 this.search();
             },
             error: (err) => {
@@ -109,9 +122,11 @@ export class SolicitudProveedorComponent {
     }
 
 
-    search() {
+    search() { 
+        console.log(this.user);
         forkJoin({
-            resultResponse: this.service.list(this.filter)
+            //resultResponse: this.service.list(this.filter)
+            resultResponse: this.service.findByProveedor({ proveedorId: this.user.proveedor?.id })
         }).subscribe({
             next: ({ resultResponse }) => {
                 this.result = [...setListRow(resultResponse)];
