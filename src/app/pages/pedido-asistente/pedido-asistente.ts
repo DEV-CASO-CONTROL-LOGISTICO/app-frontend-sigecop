@@ -1,0 +1,137 @@
+import { ChangeDetectorRef, Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { forkJoin } from 'rxjs';
+import Swal from 'sweetalert2';
+import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { CommonModule } from '@angular/common';
+import { setListRow } from '../../util/methods';
+import { FormsModule, NgForm } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { PedidoResponse } from '../../model/api/response/PedidoResponse';
+import { ProductoResponse } from '../../model/api/response/ProductoResponse';
+import { EstadoPedidoResponse } from '../../model/api/response/EstadoPedidoResponse';
+import { ProductoService } from '../../service/master/producto.service';
+import { RegexConstants } from '../../util/constant';
+import { PedidoRequest } from '../../model/api/request/PedidoRequest';
+import { PedidoService } from '../../service/gestion/pedido.service';
+import { EstadoPedidoService } from '../../service/gestion/estadoPedido.service';
+import { PedidoProductoResponse } from '../../model/api/response/PedidoProductoResponse';
+
+
+
+@Component({
+    selector: 'app-pedido',
+    standalone: true,
+    imports: [
+        CommonModule,
+        NgxDatatableModule,
+        MatDialogModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+        MatSelectModule,
+        MatDatepickerModule,
+        FormsModule
+    ],
+    templateUrl: './pedido-asistente.component.html',
+    styleUrl: './pedido-asistente.component.css'
+})
+export class PedidoAsistenteComponent implements OnInit {
+    public RG = RegexConstants;
+    pedidoIdSelect?: number;
+    result: PedidoResponse[] = [];
+    filter: PedidoRequest = {};
+    record: PedidoResponse = {};  // Cambiado a PedidoResponse para mostrar detalles
+    columns: any[] = [];
+    
+    listEstados: EstadoPedidoResponse[] = [];
+    listProductos: ProductoResponse[] = [];
+    observacionEnvio: string = '';
+
+    @ViewChild('colAccionTemplate', { static: true }) colAccionTemplate!: TemplateRef<any>;
+    @ViewChild('detallePedidoTemplate', { static: true }) detallePedidoTemplate!: TemplateRef<any>;
+    dialogRef!: MatDialogRef<any>;
+
+    constructor(
+        private dialog: MatDialog,
+        private service: PedidoService,
+        private estadoService: EstadoPedidoService,
+        private productoService: ProductoService,
+        private cdr: ChangeDetectorRef
+    ) { }
+
+    ngOnInit() {
+        this.loadInitialData();
+    }
+
+    loadInitialData() {
+        forkJoin({
+            estados: this.estadoService.list({}),
+            productos: this.productoService.list({})
+        }).subscribe({
+            next: ({ estados, productos }) => {
+                this.listEstados = estados;
+                this.listProductos = productos;
+                this.search();
+            },
+            error: (err) => {
+                Swal.fire('Error', 'No se pudo cargar datos iniciales', 'error');
+            }
+        });
+    }
+
+    cleanSearch() {
+        this.filter = {};
+        this.search();
+    }    
+
+    search() {
+            forkJoin({
+                resultResponse: this.service.list(this.filter)
+            }).subscribe({
+                next: ({ resultResponse }) => {
+                    this.result = [...setListRow(resultResponse)];
+                    this.initTable();
+                },
+                error: (err) => {
+                    Swal.close();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: '¡Advertencia!',
+                        text: err.error,
+                    });
+                }
+            });
+    }
+
+    openDetallePedido(pedido: PedidoResponse) {
+        this.record = { ...pedido };
+        this.dialogRef = this.dialog.open(this.detallePedidoTemplate, {
+            width: '800px',
+            data: { pedido: this.record }
+        });
+    }
+
+    calcularSubtotal(producto: PedidoProductoResponse): string {
+        const cantidad = producto.cantidad ?? 0;
+        const precio = producto.producto?.precioUnitario ?? 0;
+        return (cantidad * precio).toFixed(2);
+    }
+
+    private initTable() {
+        this.columns = [
+            { name: 'Nro.', prop: 'row', width: 50 },
+            { name: 'Código', prop: 'codigo', width: 100 },
+            { name: 'Estado', prop: 'estado.descripcion', width: 120 },  
+            { name: 'Proveedor', prop: 'proveedor.razonSocial', width: 120 },
+            { name: 'Descripción', prop: 'descripcion', width: 100 },
+            { name: 'Monto Total', prop: 'montoTotal', pipe: { transform: (m: number) => `S/ ${m?.toFixed(2) || '0.00'}` }, width: 100 },
+            { name: 'F. Registro', prop: 'fechaRegistro', pipe: { transform: (d: Date) => d ? new Date(d).toLocaleDateString() : '' }, width: 120 },
+            { name: 'Acciones', cellTemplate: this.colAccionTemplate, width: 120 }
+        ];
+    }
+}

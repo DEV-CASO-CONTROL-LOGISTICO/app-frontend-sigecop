@@ -1,6 +1,7 @@
+import { ClassGeneric } from "../../../util/ClassGeneric";
 import { SolicitudProductoRequest } from "./SolicitudProductoRequest";
 
-export class SolicitudRequest{
+export class SolicitudRequest extends ClassGeneric{
 
     id?: number;
     codigo?: String;

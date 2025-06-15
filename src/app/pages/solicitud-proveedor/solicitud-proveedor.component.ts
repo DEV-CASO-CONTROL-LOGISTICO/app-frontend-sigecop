@@ -17,7 +17,6 @@ import { SolicitudRequest } from '../../model/api/request/SolicitudRequest';
 import { SolicitudService } from '../../service/gestion/solicitud.service';
 import { EstadoSolicitudService } from '../../service/gestion/estadoSolicitud.service';
 import { ProductoResponse } from '../../model/api/response/ProductoResponse';
-import { EstadoSolicitudResponse } from '../../model/api/response/EstadoSolicitudResponse';
 import { Proveedor } from '../../model/dto/Proveedor';
 import { SolicitudProductoRequest } from '../../model/api/request/SolicitudProductoRequest';
 import { ProveedorService } from '../../service/master/proveedor.service';
@@ -28,6 +27,7 @@ import { CotizacionService } from '../../service/gestion/cotizacion.service';
 import { StorageService } from '../../service/util/storage.service';
 import { UsuarioService } from '../../service/security/usuario.service';
 import { UserResponse } from '../../model/api/response/UserResponse';
+import { EstadoSolicitudResponse } from '../../model/api/response/EstadoSolicitudResponse';
 
 @Component({
   selector: 'app-solicitud-proveedor',

@@ -2,7 +2,7 @@ import { ClassGeneric } from "../../../util/ClassGeneric";
 import { Proveedor } from "../../dto/Proveedor";
 import { UserResponse } from "./UserResponse";
 import { SolicitudProductoResponse } from "./SolicitudProductoResponse";
-import { EstadoSolicitudResponse } from "./EstadoSolicitudResponse";
+import { EstadoSolicitud } from "../../dto/EstadoSolicitud";
 
 export class SolicitudResponse extends ClassGeneric {
 
@@ -13,7 +13,7 @@ export class SolicitudResponse extends ClassGeneric {
     fechaFinalizado?: Date;
     usuarioCreacion?: UserResponse;
     usuarioEstado?: UserResponse;
-    estado?: EstadoSolicitudResponse;
+    estado?: EstadoSolicitud;
     finalizado?: Boolean;
     proveedores?: Proveedor[] = [];
     solicitudProducto?: SolicitudProductoResponse[] = [];

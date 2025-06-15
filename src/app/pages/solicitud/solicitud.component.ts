@@ -28,6 +28,7 @@ import { CotizacionService } from '../../service/gestion/cotizacion.service';
 
 
 
+
 @Component({
     selector: 'app-solicitud',
     imports: [CommonModule,
@@ -233,6 +234,7 @@ export class SolicitudComponent implements OnInit {
             }
         });
     }
+    
     aprobarCotizacion(item: CotizacionResponse) {
         Swal.fire({
             title: 'Confirmar aprobar',
