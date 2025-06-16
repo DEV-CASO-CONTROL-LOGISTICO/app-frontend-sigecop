@@ -4,7 +4,7 @@ import { PedidoProductoRequest } from "./PedidoProductoRequest";
 
 export class PedidoRequest extends ClassGeneric{
 
-    pedidoId?: number;
+    id?: number;
     codigo?: String;
     proveedor?: number;
     estadoId?: number;  

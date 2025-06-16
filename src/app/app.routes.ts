@@ -14,7 +14,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { UnauthorizedComponent } from './pages/unauthorized/unauthorized.component';
 import { hasRoleGuard } from './core/guards/has-role.guard';
 import { UnfoundComponent } from './pages/unfound/unfound.component';
-import { PedidoAsistenteComponent } from './pages/pedido-asistente/pedido-asistente';
+import { PedidoAsistenteComponent } from './pages/pedido-asistente/pedido-asistente.component';
 
 export const routes: Routes = [
     { path: 'login', component: LoginComponent },

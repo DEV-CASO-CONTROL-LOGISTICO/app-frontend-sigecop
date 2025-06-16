@@ -45,7 +45,7 @@ export class PedidoAsistenteComponent implements OnInit {
     pedidoIdSelect?: number;
     result: PedidoResponse[] = [];
     filter: PedidoRequest = {};
-    record: PedidoResponse = {};  // Cambiado a PedidoResponse para mostrar detalles
+    record: PedidoResponse = {};
     columns: any[] = [];
     
     listEstados: EstadoPedidoResponse[] = [];
@@ -109,17 +109,74 @@ export class PedidoAsistenteComponent implements OnInit {
     }
 
     openDetallePedido(pedido: PedidoResponse) {
-        this.record = { ...pedido };
+        // Limpiamos los datos anteriores
+        this.record = {} as PedidoResponse;
+        this.observacionEnvio = '';
+
+        forkJoin({
+            resultResponse: this.service.find({ id: pedido.id })
+        }).subscribe({
+            next: ({ resultResponse }) => {
+                this.record = {
+                    ...resultResponse,
+                    pedidoProducto: (resultResponse.pedidoProducto ?? []).map(pp => ({
+                        id: pp.id,
+                        cantidad: pp.cantidad,                        
+                        producto: {
+                            id: pp.producto?.id,
+                            nombre: pp.producto?.nombre,
+                            codigo: pp.producto?.id,
+                            precioUnitario: pp.producto?.precioUnitario
+                        }
+                    }))
+                };
+                
+                // Cargar observación de envío si existe
+                this.observacionEnvio = resultResponse.observacionEnvio || '';
+            },
+            error: (err) => {
+                Swal.fire('Error', 'No se pudo cargar el detalle del pedido', 'error');
+            }
+        });
+
         this.dialogRef = this.dialog.open(this.detallePedidoTemplate, {
-            width: '800px',
-            data: { pedido: this.record }
+            width: '800px'
         });
     }
 
-    calcularSubtotal(producto: PedidoProductoResponse): string {
+    calcularSubTotal(producto: PedidoProductoResponse): number {
         const cantidad = producto.cantidad ?? 0;
         const precio = producto.producto?.precioUnitario ?? 0;
-        return (cantidad * precio).toFixed(2);
+        return (cantidad * precio);
+    }
+
+    calcularTotal(pedido: PedidoResponse): number {
+        if (!pedido.pedidoProducto?.length) return 0;
+        
+        return pedido.pedidoProducto.reduce((total, producto) => {
+            return total + this.calcularSubTotal(producto);
+        }, 0);
+    }
+
+    validarTotal(pedido: PedidoResponse): { 
+        totalCalculado: number; 
+        totalBackend: number; 
+        coincide: boolean; 
+        diferencia: number 
+    } {
+        const totalCalculado = this.calcularTotal(pedido);
+        const totalBackend = pedido.montoTotal || 0;
+        
+        // Usamos 0.01 como margen para diferencias por decimales
+        const diferencia = Math.abs(totalCalculado - totalBackend);
+        const coincide = diferencia < 0.01;
+        
+        return {
+            totalCalculado,
+            totalBackend,
+            coincide,
+            diferencia
+        };
     }
 
     private initTable() {

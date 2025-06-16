@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PedidoAsistenteComponent } from './pedido-asistente';
+import { PedidoAsistenteComponent } from './pedido-asistente.component';
 
 
 describe('PedidoAsistenteComponent', () => {
