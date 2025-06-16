@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { BASE_URL } from '../../util/constant';
 import { SolicitudRequest } from '../../model/api/request/SolicitudRequest';
+import { SolicitudProveedorRequest } from '../../model/api/request/SolicitudProveedorRequest';
 import { SolicitudResponse } from '../../model/api/response/SolicitudResponse';
 
 
@@ -33,6 +34,9 @@ export class SolicitudService {
         return this.http.delete<SolicitudResponse>(`${BASE_URL}/solicitud/delete`, {
             body: { id: id }
         });
+    }
+    findByProveedor(filter: SolicitudProveedorRequest): Observable<SolicitudResponse[]> {
+        return this.http.post<SolicitudResponse[]>(`${BASE_URL}/solicitud/SolicitudProveedor`, filter);
     }
 
 }
