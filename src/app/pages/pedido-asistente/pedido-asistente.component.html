@@ -53,7 +53,7 @@
 
 <ng-template #detallePedidoTemplate>
     <h2 mat-dialog-title>Detalle del Pedido #{{record.codigo}}</h2>
-    <mat-dialog-content>
+    <mat-dialog-content class="factura-content">
         <div class="row mb-3">
             <div class="col-md-6">
                 <h4>Información General</h4>
@@ -71,59 +71,63 @@
         </div>
 
         <h4>Productos</h4>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Código</th>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>P. Unitario</th>
-                <th>Subtotal</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let producto of record.pedidoProducto">
-                <td>{{producto.producto?.id}}</td>
-                <td>{{producto.producto?.nombre || 'N/A'}}</td>
-                <td>{{producto.cantidad || 0}}</td>
-                <td>S/ {{(producto.producto?.precioUnitario)}}</td>
-                <td>S/ {{calcularSubTotal(producto)}}</td>
-            </tr>
-        </tbody>
-        <tfoot>
-            <tr>
-                <th colspan="4" class="text-end">Total Calculado:</th>
-                <th [class.text-success]="validarTotal(record).coincide"
-                    [class.text-warning]="!validarTotal(record).coincide">
-                    S/ {{ validarTotal(record).totalCalculado | number:'1.2-2' }}
-                </th>
-            </tr>
-            
-            <tr *ngIf="!validarTotal(record).coincide && record.montoTotal">
-                <th colspan="4" class="text-end">Total Proveedor:</th>
-                <th class="text-danger">
-                    S/ {{ validarTotal(record).totalBackend | number:'1.2-2' }}
-                    <span class="badge bg-light text-dark ms-2">
-                        Diferencia: {{ validarTotal(record).diferencia | number:'1.2-2' }}
-                    </span>
-                </th>
-            </tr>
-            
-            <tr *ngIf="!validarTotal(record).coincide">
-                <td colspan="5" class="text-end small" 
-                    [class.text-warning]="!validarTotal(record).coincide">
-                    <i class="fas fa-exclamation-triangle me-1"></i>
-                    Los totales no coinciden. Verifique los cálculos.
-                </td>
-            </tr>
-        </tfoot>
-    </table>
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th width="15%">Código</th>
+                    <th width="30%">Producto</th>
+                    <th width="15%">Cantidad</th>
+                    <th width="20%">P. Unitario</th>
+                    <th width="20%">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let producto of record.pedidoProducto">
+                    <td>{{producto.producto?.id}}</td>
+                    <td>{{producto.producto?.nombre || 'N/A'}}</td>
+                    <td>{{producto.cantidad || 0}}</td>
+                    <td>S/ {{(producto.producto?.precioUnitario)}}</td>
+                    <td>S/ {{calcularSubTotal(producto)}}</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="4" class="text-end">Total Calculado:</th>
+                    <th [class.text-success]="validarTotal(record).coincide"
+                        [class.text-warning]="!validarTotal(record).coincide">
+                        S/ {{ validarTotal(record).totalCalculado | number:'1.2-2' }}
+                    </th>
+                </tr>
+                
+                <tr *ngIf="!validarTotal(record).coincide && record.montoTotal">
+                    <th colspan="4" class="text-end">Total Proveedor:</th>
+                    <th class="text-danger">
+                        S/ {{ validarTotal(record).totalBackend | number:'1.2-2' }}
+                        <span class="badge bg-light text-dark ms-2">
+                            Diferencia: {{ validarTotal(record).diferencia | number:'1.2-2' }}
+                        </span>
+                    </th>
+                </tr>
+                
+                <tr *ngIf="!validarTotal(record).coincide">
+                    <td colspan="5" class="text-end small" 
+                        [class.text-warning]="!validarTotal(record).coincide">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Los totales no coinciden. Verifique los cálculos.
+                    </td>
+                </tr>
+            </tfoot>        
+        </table>    
 
-        
+        <mat-form-field appearance="fill" class="w-100">
+            <mat-label>Observación de Envío</mat-label>
+            <textarea matInput rows="3" [(ngModel)]="observacionEnvio" maxlength="500" (input)="RG.text($event)"></textarea>
+        </mat-form-field>
+
     </mat-dialog-content>
 
     <mat-dialog-actions align="end">
-        <button mat-button mat-dialog-close>Cancelar</button>
+        <button mat-button (click)="dialogRef.close()">Cancelar</button>
     </mat-dialog-actions>
 
 </ng-template>
