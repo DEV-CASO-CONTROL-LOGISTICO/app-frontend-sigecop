@@ -14,7 +14,6 @@ export class AuthInterceptor implements HttpInterceptor {
         ];
 
         const shouldExclude = excludedPaths.some(path => req.url.includes(path));
-
         if (shouldExclude) {
             return next.handle(req); // No modifica la request
         }

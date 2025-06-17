@@ -5,7 +5,7 @@ import { forkJoin } from 'rxjs';
 import Swal from 'sweetalert2';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { CommonModule } from '@angular/common';
-import { setListRow } from '../../util/methods';
+import { calcularTotal, convertirIsoADDMMAAAA, handleError, setListRow } from '../../util/methods';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -26,48 +26,46 @@ import { CotizacionResponse } from '../../model/api/response/CotizacionResponse'
 import { CotizacionService } from '../../service/gestion/cotizacion.service';
 import { StorageService } from '../../service/util/storage.service';
 import { UsuarioService } from '../../service/security/usuario.service';
-import { UserResponse } from '../../model/api/response/UserResponse';
 import { EstadoSolicitudResponse } from '../../model/api/response/EstadoSolicitudResponse';
+import { CotizacionRequest } from '../../model/api/request/CotizacionRequest';
+import { CotizacionProductoRequest } from '../../model/api/request/CotizacionProductoRequest';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-solicitud-proveedor',
-  imports: [
-    CommonModule,
-    NgxDatatableModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatSelectModule,
-    MatDatepickerModule,
-    FormsModule
-  ],
-  templateUrl: './solicitud-proveedor.component.html',
-  styleUrl: './solicitud-proveedor.component.css'
+    selector: 'app-solicitud-proveedor',
+    imports: [
+        CommonModule,
+        NgxDatatableModule,
+        MatDialogModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+        MatSelectModule,
+        MatDatepickerModule,
+        FormsModule,
+        MatIconModule
+    ],
+    templateUrl: './solicitud-proveedor.component.html',
+    styleUrl: './solicitud-proveedor.component.css'
 })
 export class SolicitudProveedorComponent {
-  public RG = RegexConstants;
+    public RG = RegexConstants;
 
     solicitudFinalizadoSelect?: Boolean;
     solicitudIdSelect?: number;
     result: SolicitudResponse[] = [];
     filter: SolicitudRequest = {};
     record: SolicitudRequest = {};
+    cotizacionRecord: CotizacionRequest = {};
     columns: any[] = [];
-    columnsCotizacion: any[] = [];
 
     listEstados: EstadoSolicitudResponse[] = [];
-    listProveedores: Proveedor[] = [];
-    listProductos: ProductoResponse[] = [];
-    selectedProductos: SolicitudProductoRequest[] = [];
-    selectedProveedores: number[] = [];
-    listCotizaciones: CotizacionResponse[] = [];
-    user: UserResponse = {};
-    session: UserResponse = {};
 
     @ViewChild('colEstadoTemplate', { static: true }) colEstadoTemplate!: TemplateRef<any>;
     @ViewChild('colAccionTemplate', { static: true }) colAccionTemplate!: TemplateRef<any>;
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate!: TemplateRef<any>;
+    @ViewChild('dialogTemplateCotizacion', { static: true }) dialogTemplateCotizacion!: TemplateRef<any>;
+    @ViewChild('colAccionTemplateIconSend', { static: true }) colAccionTemplateIconSend!: TemplateRef<any>;
 
     @ViewChild('viewCotizacionTemplate', { static: true }) viewCotizacionTemplate!: TemplateRef<any>;
     dialogRef!: MatDialogRef<any>;
@@ -79,30 +77,20 @@ export class SolicitudProveedorComponent {
         private proveedorService: ProveedorService,
         private productoService: ProductoService,
         private cotizacionService: CotizacionService,
-        private cdr: ChangeDetectorRef,
-        private storageService: StorageService,
-        private usuarioService: UsuarioService
+        private cdr: ChangeDetectorRef
     ) { }
 
     ngOnInit() {
-        this.session = this.storageService.getUserSession(); 
-        //this.user = session;
         this.loadInitialData();
     }
 
     loadInitialData() {
-        console.log('Buscando solicitudes para el session:', this.session);
         forkJoin({
             estados: this.estadoService.list({}),
-            proveedores: this.proveedorService.list({}),
             productos: this.productoService.list({}),
-            user : this.usuarioService.find({ id: this.session.id })
         }).subscribe({
-            next: ({ estados, proveedores, productos,user }) => {
+            next: ({ estados, productos }) => {
                 this.listEstados = estados;
-                this.listProveedores = proveedores;
-                this.listProductos = productos;
-                this.user = user;
                 this.search();
             },
             error: (err) => {
@@ -116,17 +104,13 @@ export class SolicitudProveedorComponent {
         this.search();
     }
 
-    private handleError(err: any) {
-        const errorMessage = err?.error?.message || err?.error || 'Ocurrió un error inesperado';
-        Swal.fire('Error', errorMessage, 'error');
-    }
-
-
-    search() { 
-        console.log(this.user);
+    search() {
         forkJoin({
-            //resultResponse: this.service.list(this.filter)
-            resultResponse: this.service.findByProveedor({ proveedorId: this.user.proveedor?.id })
+            resultResponse: this.service.findByProveedor({
+                estadoId: this.filter.estadoId,
+                codigo: this.filter.codigo,
+                descripcion: this.filter.descripcion
+            })
         }).subscribe({
             next: ({ resultResponse }) => {
                 this.result = [...setListRow(resultResponse)];
@@ -143,14 +127,17 @@ export class SolicitudProveedorComponent {
         });
     }
 
-    openAdd() {
-        this.record = {};
-        this.selectedProductos = [];
-        this.selectedProveedores = [];
-        this.dialogRef = this.dialog.open(this.dialogTemplate, { width: '800px' });
+
+    convertirFecha(fecha: any): any {
+        return convertirIsoADDMMAAAA(fecha);
     }
 
-    openEdit(item: SolicitudResponse) {
+    calcularMontoTotalPorProducto(cantidad: number | null | undefined, precioUnitario: number | null | undefined): number | null {
+        return calcularTotal(cantidad, precioUnitario);
+    }
+
+    openView(item: SolicitudResponse) {
+        this.record = {};
         forkJoin({
             resultResponse: this.service.find({ id: item.id })
         }).subscribe({
@@ -161,26 +148,18 @@ export class SolicitudProveedorComponent {
                     descripcion: resultResponse.descripcion,
                     fechaCreacion: resultResponse.fechaCreacion,
                     estadoId: resultResponse.estado?.id,
+                    estadoStr: resultResponse.estado?.descripcion,
                     proveedores: (resultResponse.proveedores ?? []).map(prov => prov.id ?? 0),
-                    solicitudProducto: (resultResponse.solicitudProducto ?? []).map(sp => {
+                    solicitudProducto: setListRow((resultResponse.solicitudProducto ?? []).map(sp => {
                         return {
+                            row: 0,
                             id: sp.id,
                             cantidad: sp.cantidad,
                             productoId: sp.producto?.id,
                             productoNombre: sp.producto?.nombre
                         }
-                    }),
+                    })),
                 };
-                // Cargar proveedores seleccionados
-                this.selectedProveedores = this.record.proveedores ?? [];
-
-                // Cargar productos seleccionados (eliminando duplicados)
-                this.selectedProductos = this.record.solicitudProducto?.map(sp => ({
-                    id: sp.id,
-                    productoId: sp.productoId,
-                    cantidad: sp.cantidad,
-                    productoNombre: sp.productoNombre // Agregamos el nombre para mostrar
-                })) || [];
             },
             error: (err) => {
                 Swal.close();
@@ -196,12 +175,66 @@ export class SolicitudProveedorComponent {
         this.dialogRef = this.dialog.open(this.dialogTemplate, { width: '800px' });
     }
 
-    searchCotizaciones(solicitudId: any) {
-        forkJoin({
-            resultResponse: this.cotizacionService.list({ solicitudId: solicitudId })
-        }).subscribe({
-            next: ({ resultResponse }) => {
-                this.listCotizaciones = [...setListRow(resultResponse ?? [])];
+    validarCantidad(event: any) {
+        const input = event.target;
+        const valor = input.value;
+
+        const regex = /^\d{0,4}(\.\d{0,2})?$/;
+
+        if (!regex.test(valor)) {
+            const limpio = valor.match(/^\d{0,4}(\.\d{0,2})?/);
+            input.value = limpio ? limpio[0] : '';
+            input.dispatchEvent(new Event('input')); // Actualiza ngModel
+        }
+    }
+
+    openSendCotizacion(item: SolicitudResponse) {
+        this.cotizacionRecord = {};
+        const observables: any = {
+            resultResponse: this.service.find({ id: item.id })
+        };
+        if (item.cotizacionActual?.id) {
+            observables.resultCotizacion = this.cotizacionService.find({ id: item.cotizacionActual.id });
+        }
+        forkJoin(observables).subscribe({
+            next: (res: any) => {
+                const resultResponse: SolicitudResponse = res.resultResponse;
+                const resultCotizacion: CotizacionResponse = res.resultCotizacion ?? null;
+                this.cotizacionRecord = {
+                    id: item.cotizacionActual?.id,
+                    comentario: item.cotizacionActual?.comentario,
+                    solicitud: {
+                        id: resultResponse.id,
+                        codigo: resultResponse.codigo,
+                        descripcion: resultResponse.descripcion,
+                        fechaCreacion: resultResponse.fechaCreacion,
+                        estadoId: resultResponse.estado?.id,
+                        estadoStr: resultResponse.estado?.descripcion,
+                    },
+                    solicitudProveedorId: item.solicitudProveedorActualId,
+                    cotizacionProducto: setListRow(resultCotizacion && resultCotizacion.id ? // si tiene cotizacion
+                        (resultCotizacion.cotizacionProducto ?? []).map(sp => {
+                            return {
+                                row: 0,
+                                cantidadSolicitada: sp.cantidadSolicitado,
+                                cantidadCotizada: sp.cantidadCotizada,
+                                precioUnitario: sp.precioUnitario,
+                                productoId: sp.producto?.id,
+                                productoNombre: sp.producto?.nombre
+                            }
+                        }) :
+                        (resultResponse.solicitudProducto ?? []).map(sp => {
+                            return {
+                                row: 0,
+                                cantidadSolicitada: sp.cantidad,
+                                cantidadCotizada: sp.cantidad,
+                                precioUnitario: null,
+                                productoId: sp.producto?.id,
+                                productoNombre: sp.producto?.nombre
+                            }
+                        })
+                    ),
+                };
             },
             error: (err) => {
                 Swal.close();
@@ -212,197 +245,60 @@ export class SolicitudProveedorComponent {
                 });
             }
         });
-    }
 
-
-    openViewCotizaciones(item: SolicitudResponse) {
-        this.solicitudIdSelect = item.id;
-        this.solicitudFinalizadoSelect = item.finalizado;
-        this.searchCotizaciones(item.id);
-        this.dialogRef = this.dialog.open(this.viewCotizacionTemplate, {
-            width: '1000px',
+        this.dialogRef = this.dialog.open(this.dialogTemplateCotizacion, {
+            width: '850px',
             maxWidth: 'none'
         });
     }
 
-    archivarCotizacion(item: CotizacionResponse) {
-        Swal.fire({
-            title: 'Confirmar archivar',
-            text: `¿Está seguro de archivar la cotización ${item.codigo}?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, archivar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                this.cotizacionService.archivar({ id: item.id }).subscribe({
-                    next: () => {
-                        Swal.fire('Éxito', 'Cotización archivada', 'success');
-                        this.searchCotizaciones(this.solicitudIdSelect);
-                        this.cdr.detectChanges();
-                    },
-                    error: (err) => {
-                        this.handleError(err);
-                    }
-                });
-            }
-        });
-    }
-    aprobarCotizacion(item: CotizacionResponse) {
-        Swal.fire({
-            title: 'Confirmar aprobar',
-            text: `¿Está seguro de aprobar la cotización ${item.codigo}?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, aprobar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                this.cotizacionService.aprobar({ id: item.id }).subscribe({
-                    next: () => {
-                        Swal.fire('Éxito', 'Cotización aprobada', 'success');
-                        this.searchCotizaciones(this.solicitudIdSelect);
-                        this.search();
-                        this.cdr.detectChanges();
-                    },
-                    error: (err) => {
-                        this.handleError(err);
-                    }
-                });
-            }
-        });
+    calcularTotal(): number {
+        return (this.cotizacionRecord?.cotizacionProducto ?? [])
+            .reduce((total, row: CotizacionProductoRequest) => {
+                const cantidad = parseFloat(row.cantidadCotizada + '') || 0;
+                const precio = parseFloat(row.precioUnitario + '') || 0;
+                return total + cantidad * precio;
+            }, 0);
     }
 
-    save() {
-        if (!this.record.descripcion?.trim() ||
-            !this.record.fechaCreacion) {
-            Swal.fire('Error', 'Complete todos los campos obligatorios', 'error');
-            return;
-        }
+    calcularSubtotal(): number {
+        const total = this.calcularTotal();
+        return total / 1.18;
+    }
 
-        if (this.record.descripcion?.length > 500) {
-            Swal.fire('Error', 'La descripción no puede exceder los 500 caracteres', 'error');
-            return;
-        }
-
-        if (this.selectedProveedores.length === 0) {
-            Swal.fire('Error', 'Seleccione al menos un proveedor', 'error');
-            return;
-        }
-
-        if (this.selectedProductos.length === 0) {
-            Swal.fire('Error', 'Agregue al menos un producto', 'error');
-            return;
-        }
-
-        const productoInvalido = this.selectedProductos.some(p =>
-            !p.productoId || !p.cantidad || p.cantidad <= 0
+    sendCotizacion() {
+        const productosSelectPrice = this.cotizacionRecord?.cotizacionProducto?.some(p =>
+            !p.precioUnitario
         );
-
-        if (productoInvalido) {
-            Swal.fire('Error', 'Todos los productos deben tener una cantidad válida', 'error');
+        if (productosSelectPrice) {
+            Swal.fire('Error', 'Todos los productos deben tener un precio unitario', 'error');
             return;
         }
 
-        this.record.proveedores = this.selectedProveedores;
-        this.record.solicitudProducto = this.selectedProductos;
+        this.cotizacionRecord.monto = this.calcularTotal();
 
-        this.service.save(this.record).subscribe({
-            next: (response) => {
-                Swal.fire('Éxito', 'Solicitud guardada correctamente', 'success');
-                this.search();
-                this.dialogRef.close();
-            },
-            error: (err) => {
-                this.handleError(err);
-            }
-        });
-    }
-
-
-    delete(item: SolicitudResponse) {
         Swal.fire({
-            title: 'Confirmar eliminación',
-            text: `¿Está seguro de eliminar la solicitud ${item.codigo}?`,
+            title: this.cotizacionRecord.id ? "Actualización de Cotización" : "Envío de Cotización",
+            text: "¿Está seguro de " + (this.cotizacionRecord.id ? "actualizar" : "enviar") + " su cotización?",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Sí, eliminar',
+            confirmButtonText: 'Sí',
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                this.service.delete(item.id).subscribe({
-                    next: () => {
-                        Swal.fire('Éxito', 'Solicitud eliminada', 'success');
+                this.cotizacionService.save(this.cotizacionRecord).subscribe({
+                    next: (response) => {
+                        Swal.fire('Éxito', 'Cotización enviada correctamente', 'success');
                         this.search();
-                        this.cdr.detectChanges();
+                        this.dialogRef.close();
                     },
                     error: (err) => {
-                        this.handleError(err);
+                        handleError(err);
                     }
                 });
             }
         });
-    }
 
-    finalizar(item: SolicitudResponse) {
-        Swal.fire({
-            title: 'Confirmar finalización',
-            text: `¿Está seguro de finalizar la solicitud ${item.codigo}?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, finalizar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                this.service.finalizar({ id: item.id }).subscribe({
-                    next: () => {
-                        Swal.fire('Éxito', 'Solicitud finalizada', 'success');
-                        this.search();
-                        this.cdr.detectChanges();
-                    },
-                    error: (err) => {
-                        this.handleError(err);
-                    }
-                });
-            }
-        });
-    }
-
-    getFilteredProductos(index: number): ProductoResponse[] {
-        const currentProductId = this.selectedProductos[index]?.productoId;
-
-        return this.listProductos.filter(p =>
-            p.id === currentProductId ||
-            !this.selectedProductos.some(sp => sp.productoId === p.id)
-        );
-    }
-
-
-    addProducto() {
-        const productosDisponibles = this.getAvailableProducts();
-        if (productosDisponibles.length === 0) {
-            Swal.fire('Atención', 'Ya no hay más productos disponibles para agregar.', 'info');
-            return;
-        }
-        this.selectedProductos.push({
-            productoId: productosDisponibles[0].id,
-            cantidad: 1
-        });
-    }
-
-    private getAvailableProducts(): ProductoResponse[] {
-        return this.listProductos.filter(p =>
-            !this.selectedProductos.some(sp => sp.productoId === p.id)
-        );
-    }
-
-    removeProducto(index: number) {
-        this.selectedProductos.splice(index, 1);
-    }
-
-    getEstadoDescripcion(estadoId?: number): string {
-        const estado = estadoId ? this.listEstados.find(e => e.id === estadoId) : null;
-        return estado?.descripcion ?? 'En proceso';
     }
 
     private initTable() {
@@ -413,6 +309,7 @@ export class SolicitudProveedorComponent {
             { name: 'Estado', prop: 'estado.descripcion', width: 120 },
             { name: 'F. Creación', prop: 'fechaCreacion', pipe: { transform: (d: Date) => d ? new Date(d).toLocaleDateString() : '' }, width: 120 },
             { name: 'F. Finalizado', prop: 'fechaFinalizado', pipe: { transform: (d: Date) => d ? new Date(d).toLocaleDateString() : '' }, width: 120 },
+            { name: '¿Cotización enviada?', cellTemplate: this.colAccionTemplateIconSend, width: 120 },
             { name: 'Acciones', cellTemplate: this.colAccionTemplate, width: 120 }
         ];
     }

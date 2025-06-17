@@ -5,7 +5,7 @@ import { forkJoin } from 'rxjs';
 import Swal from 'sweetalert2';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { CommonModule } from '@angular/common';
-import { setListRow } from '../../util/methods';
+import { calcularTotal, convertirIsoADDMMAAAA, setListRow } from '../../util/methods';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -49,6 +49,8 @@ export class SolicitudComponent implements OnInit {
     solicitudFinalizadoSelect?: Boolean;
     solicitudIdSelect?: number;
     result: SolicitudResponse[] = [];
+    solicitudSelected: SolicitudResponse = {};
+    cotizacionSelected: CotizacionResponse = {};
     filter: SolicitudRequest = {};
     record: SolicitudRequest = {};
     columns: any[] = [];
@@ -63,9 +65,10 @@ export class SolicitudComponent implements OnInit {
 
     @ViewChild('colAccionTemplate', { static: true }) colAccionTemplate!: TemplateRef<any>;
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate!: TemplateRef<any>;
-
     @ViewChild('viewCotizacionTemplate', { static: true }) viewCotizacionTemplate!: TemplateRef<any>;
+    @ViewChild('viewDetalleCotizacionTemplate', { static: true }) viewDetalleCotizacionTemplate!: TemplateRef<any>;
     dialogRef!: MatDialogRef<any>;
+    dialogRefAux!: MatDialogRef<any>;
 
     constructor(
         private dialog: MatDialog,
@@ -109,6 +112,9 @@ export class SolicitudComponent implements OnInit {
         Swal.fire('Error', errorMessage, 'error');
     }
 
+    convertirFecha(fecha: any): any {
+        return convertirIsoADDMMAAAA(fecha);
+    }
 
     search() {
         forkJoin({
@@ -147,6 +153,7 @@ export class SolicitudComponent implements OnInit {
                     descripcion: resultResponse.descripcion,
                     fechaCreacion: resultResponse.fechaCreacion,
                     estadoId: resultResponse.estado?.id,
+                    estadoStr: resultResponse.estado?.descripcion,
                     proveedores: (resultResponse.proveedores ?? []).map(prov => prov.id ?? 0),
                     solicitudProducto: (resultResponse.solicitudProducto ?? []).map(sp => {
                         return {
@@ -204,9 +211,42 @@ export class SolicitudComponent implements OnInit {
     openViewCotizaciones(item: SolicitudResponse) {
         this.solicitudIdSelect = item.id;
         this.solicitudFinalizadoSelect = item.finalizado;
+        this.solicitudSelected = item;
         this.searchCotizaciones(item.id);
         this.dialogRef = this.dialog.open(this.viewCotizacionTemplate, {
             width: '1000px',
+            maxWidth: 'none'
+        });
+    }
+
+    calcularMontoTotalPorProducto(cantidad: number | null | undefined, precioUnitario: number | null | undefined): number | null {
+        return calcularTotal(cantidad, precioUnitario);
+    }
+
+    calcularSubtotal(): number {
+        const total = this.cotizacionSelected.monto ?? 0;
+        return total / 1.18;
+    }
+
+    verDetalleCotizacion(item: CotizacionResponse) {
+        forkJoin({
+            resultCotizacion: this.cotizacionService.find({ id: item.id })
+        }).subscribe({
+            next: ({ resultCotizacion }) => {
+                this.cotizacionSelected = resultCotizacion;
+                this.cotizacionSelected.cotizacionProducto = setListRow(this.cotizacionSelected.cotizacionProducto ?? []);
+            },
+            error: (err) => {
+                Swal.close();
+                Swal.fire({
+                    icon: 'warning',
+                    title: '¡Advertencia!',
+                    text: err.error,
+                });
+            }
+        });
+        this.dialogRefAux = this.dialog.open(this.viewDetalleCotizacionTemplate, {
+            width: '850px',
             maxWidth: 'none'
         });
     }
@@ -234,7 +274,7 @@ export class SolicitudComponent implements OnInit {
             }
         });
     }
-    
+
     aprobarCotizacion(item: CotizacionResponse) {
         Swal.fire({
             title: 'Confirmar aprobar',
@@ -261,8 +301,7 @@ export class SolicitudComponent implements OnInit {
     }
 
     save() {
-        if (!this.record.descripcion?.trim() ||
-            !this.record.fechaCreacion) {
+        if (!this.record.descripcion?.trim()) {
             Swal.fire('Error', 'Complete todos los campos obligatorios', 'error');
             return;
         }
@@ -282,11 +321,17 @@ export class SolicitudComponent implements OnInit {
             return;
         }
 
-        const productoInvalido = this.selectedProductos.some(p =>
-            !p.productoId || !p.cantidad || p.cantidad <= 0
+        const productoSelectInvalido = this.selectedProductos.some(p =>
+            !p.productoId
         );
-
-        if (productoInvalido) {
+        const productoCantInvalido = this.selectedProductos.some(p =>
+            !p.cantidad || p.cantidad <= 0
+        );
+        if (productoSelectInvalido) {
+            Swal.fire('Error', 'Todos los productos deben tener una cantidad válida', 'error');
+            return;
+        }
+        if (productoCantInvalido) {
             Swal.fire('Error', 'Todos los productos deben tener una cantidad válida', 'error');
             return;
         }
@@ -372,7 +417,7 @@ export class SolicitudComponent implements OnInit {
             return;
         }
         this.selectedProductos.push({
-            productoId: productosDisponibles[0].id,
+            productoId: null, //productosDisponibles[0].id
             cantidad: 1
         });
     }

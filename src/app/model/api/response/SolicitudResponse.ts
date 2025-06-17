@@ -3,6 +3,7 @@ import { Proveedor } from "../../dto/Proveedor";
 import { UserResponse } from "./UserResponse";
 import { SolicitudProductoResponse } from "./SolicitudProductoResponse";
 import { EstadoSolicitud } from "../../dto/EstadoSolicitud";
+import { CotizacionResponse } from "./CotizacionResponse";
 
 export class SolicitudResponse extends ClassGeneric {
 
@@ -17,4 +18,7 @@ export class SolicitudResponse extends ClassGeneric {
     finalizado?: Boolean;
     proveedores?: Proveedor[] = [];
     solicitudProducto?: SolicitudProductoResponse[] = [];
+
+    solicitudProveedorActualId?: number;
+    cotizacionActual?: CotizacionResponse;
 }

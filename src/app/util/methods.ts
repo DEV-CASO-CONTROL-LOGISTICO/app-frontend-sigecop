@@ -1,3 +1,4 @@
+import Swal from "sweetalert2";
 import { UserResponse } from "../model/api/response/UserResponse";
 import { Pagina } from "../model/dto/Pagina";
 import { ClassGeneric } from "./ClassGeneric";
@@ -42,4 +43,31 @@ export function parseJwt(token: any): UserResponse {
     } catch (e) {
         return {};
     }
+}
+
+export function convertirIsoADDMMAAAA(fechaIso: any): any {
+    if (!fechaIso) return null;
+
+    const fecha = new Date(fechaIso);
+    if (isNaN(fecha.getTime())) return null; // Verifica si la fecha es inválida
+
+    const dia = String(fecha.getUTCDate()).padStart(2, '0');
+    const mes = String(fecha.getUTCMonth() + 1).padStart(2, '0');
+    const anio = fecha.getUTCFullYear();
+
+    return `${dia}/${mes}/${anio}`;
+}
+
+export function handleError(err: any) {
+    const errorMessage = err?.error?.message || err?.error || 'Ocurrió un error inesperado';
+    Swal.fire('Error', errorMessage, 'error');
+}
+
+export function calcularTotal(cantidad: number | null | undefined, precioUnitario: number | null | undefined): number | null {
+    if (cantidad == null || precioUnitario == null || isNaN(cantidad) || isNaN(precioUnitario)) {
+        return null;
+    }
+
+    const total = cantidad * precioUnitario;
+    return parseFloat(total.toFixed(2));
 }

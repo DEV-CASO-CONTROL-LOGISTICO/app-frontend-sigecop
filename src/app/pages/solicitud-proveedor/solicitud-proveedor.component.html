@@ -1,5 +1,5 @@
 <div class="mb-4">
-    <h1>Atención de Solicitudes de Cotización</h1>
+    <h1>Solicitudes</h1>
     <hr>
 </div>
 
@@ -32,165 +32,194 @@
         </div>
 
         <div class="col-md-3 d-flex justify-content-start align-items-center mb-3">
-            <button class="btn btn-primary" (click)="search()">
+            <button class="btn btn-primary" (click)="search()" title="Buscar">
                 <i class="fas fa-search"></i>
             </button>
-            <button class="btn btn-secondary" (click)="cleanSearch()" style="margin-left: 10px;">
+            <button class="btn btn-secondary" (click)="cleanSearch()" title="Limpiar" style="margin-left: 10px;">
                 <i class="fas fa-eraser"></i>
             </button>
         </div>
     </div>
 </div>
 
-
-<div class="d-flex justify-content-end mb-3">
-    <button class="btn btn-success" (click)="openAdd()">
-        <i class="fas fa-plus"></i>
-    </button>
-</div>
-
 <ngx-datatable class="bootstrap" [rows]="result" [columns]="columns" [limit]="5" [columnMode]="'force'"
     [headerHeight]="50" [footerHeight]="50" [rowHeight]="'auto'">
 
+    <ng-template #colAccionTemplateIconSend let-row="row">
+        <ng-container *ngIf="row.cotizacionActual?.id; else noEnviado">
+            <div class="icono-con-texto-vertical">
+                <mat-icon class="icon-enviado">check_circle</mat-icon>
+                <span class="texto-icono">({{ row.cotizacionActual?.estado.descripcion }})</span>
+            </div>
+        </ng-container>
+        <ng-template #noEnviado>
+            <div class="icono-con-texto-vertical">
+                <mat-icon class="icon-no-enviado">highlight_off</mat-icon>
+            </div>
+        </ng-template>
+    </ng-template>
+
     <ng-template #colAccionTemplate let-row="row">
-        <button class="btn btn-primary btn-sm" (click)="openViewCotizaciones(row)">
-            <i class="fas fa-list"></i>
+
+        <button class="btn btn-primary btn-sm" style="margin-left: 5px;" (click)="openView(row)" title="Ver">
+            <i class="fas fa-eye"></i>
         </button>
-        <button class="btn btn-warning btn-sm" style="margin-left: 5px;" (click)="openEdit(row)"
-            *ngIf="!row.finalizado">
-            <i class="fas fa-pencil"></i>
-        </button>
-        <button class="btn btn-info btn-sm" style="margin-left: 5px;" (click)="finalizar(row)" *ngIf="!row.finalizado">
-            <i class="fa-solid fa-check-double"></i>
-        </button>
-        <button class="btn btn-danger btn-sm" style="margin-left: 5px;" (click)="delete(row)" *ngIf="!row.finalizado">
-            <i class="fas fa-trash"></i>
+        <button [ngClass]="row.cotizacionActual?.id ? 'btn btn-warning btn-sm' : 'btn btn-success btn-sm'"
+            style="margin-left: 5px;" (click)="openSendCotizacion(row)"
+            [title]="row.cotizacionActual?.id ? 'Actualizar Cotización' : 'Enviar Cotización'"
+            *ngIf="!row.finalizado &&(!row.cotizacionActual?.id || (row.cotizacionActual?.id && !row.cotizacionActual?.finalizado)) ">
+            <i [ngClass]="row.cotizacionActual?.id ? 'fa-solid fa-pencil' : 'fas fa-paper-plane'"></i>
         </button>
     </ng-template>
 </ngx-datatable>
 
 <ng-template #dialogTemplate>
-    <h2 mat-dialog-title>{{ record.id ? 'Editar Solicitud' : 'Agregar Solicitud' }}</h2>
+    <h2 mat-dialog-title>{{ 'Detalle de Solicitud' }}</h2>
     <mat-dialog-content>
 
-        <!-- Campo Código: Solo en edición -->
-        <mat-form-field appearance="fill" class="w-100" *ngIf="record.id">
-            <mat-label>Código</mat-label>
-            <input matInput [(ngModel)]="record.codigo" maxlength="100" disabled>
-        </mat-form-field>
-
-        <!-- Campo Descripción -->
-        <mat-form-field appearance="fill" class="w-100">
-            <mat-label>Descripción</mat-label>
-            <textarea matInput rows="3" [(ngModel)]="record.descripcion" maxlength="300" (input)="RG.text($event)"
-                required></textarea>
-        </mat-form-field>
-
-        <!-- Campo Fecha Creación -->
-        <mat-form-field appearance="fill" class="w-100">
-            <mat-label>Fecha Creación</mat-label>
-            <input matInput [matDatepicker]="pickerCreacion" [(ngModel)]="record.fechaCreacion" required>
-            <mat-datepicker-toggle matSuffix [for]="pickerCreacion"></mat-datepicker-toggle>
-            <mat-datepicker #pickerCreacion></mat-datepicker>
-        </mat-form-field>
-
-
-        <!-- Campo Estado: Solo en edición -->
-        <mat-form-field appearance="fill" class="w-100" *ngIf="record.id">
-            <mat-label>Estado</mat-label>
-            <input matInput [value]="getEstadoDescripcion(record.estadoId!)" disabled>
-        </mat-form-field>
-
-
-        <!-- Proveedores -->
-        <h5 class="mt-3">Proveedores*</h5>
-        <mat-form-field appearance="fill" class="w-100">
-            <mat-label>Seleccionar Proveedores</mat-label>
-            <mat-select [(ngModel)]="selectedProveedores" multiple>
-                <mat-option *ngFor="let prov of listProveedores" [value]="prov.id">
-                    {{ prov.razonSocial }}
-                </mat-option>
-            </mat-select>
-        </mat-form-field>
-
-        <!-- Productos -->
-        <h5 class="mt-3">Productos*</h5>
-        <div *ngFor="let prod of selectedProductos; let i = index" class="row align-items-center mb-2">
-            <div class="col-md-7">
-                <mat-form-field appearance="fill" class="w-100">
-                    <mat-label>Producto</mat-label>
-                    <mat-select [(ngModel)]="prod.productoId" required>
-                        <mat-option *ngFor="let p of getFilteredProductos(i)" [value]="p.id">
-                            {{ p.nombre }}
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
+        <div class="row mb-3" *ngIf="record.id">
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Código</div>
+                    <div class="info-value">{{ record.codigo }}</div>
+                </div>
             </div>
-            <div class="col-md-3">
-                <mat-form-field appearance="fill" class="w-100">
-                    <mat-label>Cantidad</mat-label>
-                    <input matInput type="number" min="1" [(ngModel)]="prod.cantidad">
-                </mat-form-field>
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Estado</div>
+                    <div class="info-value">{{ record.estadoStr }}</div>
+                </div>
             </div>
-            <div class="col-md-2 text-center">
-                <button class="btn btn-danger btn-sm" (click)="removeProducto(i)">
-                    <i class="fas fa-trash"></i>
-                </button>
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Fecha Creación</div>
+                    <div class="info-value">{{ convertirFecha(record.fechaCreacion) }}</div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="info-block">
+                    <div class="info-label">Descripción</div>
+                    <div class="info-value">{{ record.descripcion }}</div>
+                </div>
             </div>
         </div>
-
-        <button mat-flat-button color="primary" (click)="addProducto()">
-            <i class="fas fa-plus"></i> Agregar Producto
-        </button>
-
-    </mat-dialog-content>
-
-    <mat-dialog-actions align="end">
-        <button mat-button (click)="dialogRef.close()">Cancelar</button>
-        <button mat-flat-button color="primary" (click)="save()">Guardar</button>
-    </mat-dialog-actions>
-</ng-template>
-
-<ng-template #viewCotizacionTemplate>
-    <div class="modal-cotizaciones ancho-personalizado">
-        <h2 class="titulo-modal">Cotizaciones</h2>
 
         <div class="tabla-container">
             <table class="tabla-cotizaciones">
                 <thead>
                     <tr>
                         <th>Nro.</th>
-                        <th>Código</th>
-                        <th>Proveedor</th>
-                        <th>Estado</th>
-                        <th>Comentario</th>
-                        <th>Acciones</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let row of listCotizaciones">
+                    <tr *ngFor="let row of record.solicitudProducto">
                         <td>{{ row.row }}</td>
-                        <td>{{ row.codigo }}</td>
-                        <td>{{ row.solicitudProveedor?.proveedor?.ruc }} - {{
-                            row.solicitudProveedor?.proveedor?.razonSocial}}</td>
-                        <td>{{ row.estado?.descripcion }}</td>
-                        <td>{{ row.comentario }}</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm" *ngIf="row.estado?.id==1 && !solicitudFinalizadoSelect" (click)="archivarCotizacion(row)">
-                                <i class="fa-solid fa-xmark"></i> 
-                            </button>
-                            <button class="btn btn-success btn-sm" *ngIf="row.estado?.id==1 && !solicitudFinalizadoSelect" (click)="aprobarCotizacion(row)"
-                                style="margin-left: 5px;">
-                                <i class="fa-solid fa-check"></i>
-                            </button>
-                        </td>
+                        <td>{{ row.productoNombre }}</td>
+                        <td>{{ row.cantidad }}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <div class="acciones-modal">
-            <button class="btn-cerrar" (click)="dialogRef.close()">Cerrar</button>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button mat-button (click)="dialogRef.close()">Cerrar</button>
+    </mat-dialog-actions>
+</ng-template>
+
+
+<ng-template #dialogTemplateCotizacion>
+
+    <h2 mat-dialog-title>{{ cotizacionRecord.id?'Editar Cotización':'Enviar Cotización' }}</h2>
+    <mat-dialog-content>
+
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Código</div>
+                    <div class="info-value">{{ cotizacionRecord.solicitud?.codigo }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Estado</div>
+                    <div class="info-value">{{ cotizacionRecord.solicitud?.estadoStr }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Fecha Creación</div>
+                    <div class="info-value">{{ convertirFecha(cotizacionRecord.solicitud?.fechaCreacion) }}</div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="info-block">
+                    <div class="info-label">Descripción</div>
+                    <div class="info-value">{{ cotizacionRecord.solicitud?.descripcion }}</div>
+                </div>
+            </div>
         </div>
-    </div>
+        <div class="d-flex align-items-center mt-3 mb-2">
+            <h5 class="mb-0 me-2">Productos a cotizar</h5>
+            <small class="text-muted fst-italic">(Ingrese los precios unitarios considerando que ya deben incluir el
+                IGV)</small>
+        </div>
+        <div class="tabla-container">
+            <table class="tabla-cotizaciones">
+                <thead>
+                    <tr>
+                        <th>Nro.</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Precio Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let row of cotizacionRecord.cotizacionProducto">
+                        <td>{{ row.row }}</td>
+                        <td>{{ row.productoNombre }}</td>
+                        <td>{{ row.cantidadCotizada }}</td>
+                        <td>
+                            <mat-form-field appearance="fill">
+                                <mat-label>Precio Unitario</mat-label>
+                                <input matInput type="number" min="0.01" step="0.01" [(ngModel)]="row.precioUnitario"
+                                    (input)="validarCantidad($event)">
+                            </mat-form-field>
+                        </td>
+                        <td>{{ calcularMontoTotalPorProducto(row.cantidadCotizada,row.precioUnitario) }}</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="fila-subtotal">
+                        <td colspan="4" class="text-end"><strong>Subtotal</strong></td>
+                        <td>{{ calcularSubtotal() | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr class="fila-total">
+                        <td colspan="4" class="text-end"><strong>Total (incluye IGV)</strong></td>
+                        <td>{{ calcularTotal() | number:'1.2-2' }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <mat-form-field appearance="fill" class="w-100">
+            <mat-label>Comentarios adicionales</mat-label>
+            <textarea matInput rows="3" [(ngModel)]="cotizacionRecord.comentario" maxlength="500"
+                (input)="RG.text($event)"></textarea>
+        </mat-form-field>
+
+
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button mat-flat-button color="primary" (click)="sendCotizacion()">
+            {{ cotizacionRecord.id?'Editar':'Enviar' }}
+        </button>
+        <button mat-button (click)="dialogRef.close()">Cerrar</button>
+    </mat-dialog-actions>
+
 </ng-template>

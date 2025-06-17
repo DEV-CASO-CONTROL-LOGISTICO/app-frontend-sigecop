@@ -8,6 +8,7 @@ export class SolicitudRequest extends ClassGeneric{
     descripcion?: string;
     fechaCreacion?: Date;
     estadoId?: number;
+    estadoStr?: string;
     proveedores?: number[] = [];
     solicitudProducto?: SolicitudProductoRequest[] = [];
 }

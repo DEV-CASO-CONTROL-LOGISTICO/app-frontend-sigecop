@@ -16,4 +16,6 @@ export class CotizacionResponse extends ClassGeneric {
     usuarioCreacion?: UserResponse;
     usuarioEstado?: UserResponse;
     cotizacionProducto?: CotizacionProductoResponse[] = [];
+    
+    finalizado?: Boolean;
 }

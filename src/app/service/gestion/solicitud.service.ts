@@ -35,7 +35,7 @@ export class SolicitudService {
             body: { id: id }
         });
     }
-    findByProveedor(filter: SolicitudProveedorRequest): Observable<SolicitudResponse[]> {
+    findByProveedor(filter: SolicitudRequest): Observable<SolicitudResponse[]> {
         return this.http.post<SolicitudResponse[]>(`${BASE_URL}/solicitud/SolicitudProveedor`, filter);
     }
 

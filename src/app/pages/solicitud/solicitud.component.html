@@ -1,5 +1,5 @@
 <div class="mb-4">
-    <h1>Gestión de Solicitudes de Cotización</h1>
+    <h1>Gestión de Solicitudes</h1>
     <hr>
 </div>
 
@@ -32,10 +32,10 @@
         </div>
 
         <div class="col-md-3 d-flex justify-content-start align-items-center mb-3">
-            <button class="btn btn-primary" (click)="search()">
+            <button class="btn btn-primary" (click)="search()" title="Agregar">
                 <i class="fas fa-search"></i>
             </button>
-            <button class="btn btn-secondary" (click)="cleanSearch()" style="margin-left: 10px;">
+            <button class="btn btn-secondary" (click)="cleanSearch()" title="Limpiar" style="margin-left: 10px;">
                 <i class="fas fa-eraser"></i>
             </button>
         </div>
@@ -44,7 +44,7 @@
 
 <!--Acciones-->
 <div class="d-flex justify-content-end mb-3">
-    <button class="btn btn-success" (click)="openAdd()">
+    <button class="btn btn-success" (click)="openAdd()" title="Agregar">
         <i class="fas fa-plus"></i>
     </button>
 </div>
@@ -53,17 +53,19 @@
     [headerHeight]="50" [footerHeight]="50" [rowHeight]="'auto'">
 
     <ng-template #colAccionTemplate let-row="row">
-        <button class="btn btn-primary btn-sm" (click)="openViewCotizaciones(row)">
+        <button class="btn btn-primary btn-sm" (click)="openViewCotizaciones(row)" title="Ver Cotizaciones">
             <i class="fas fa-list"></i>
         </button>
-        <button class="btn btn-warning btn-sm" style="margin-left: 5px;" (click)="openEdit(row)"
+        <button class="btn btn-warning btn-sm" style="margin-left: 5px;" (click)="openEdit(row)" title="Editar"
             *ngIf="!row.finalizado">
             <i class="fas fa-pencil"></i>
         </button>
-        <button class="btn btn-info btn-sm" style="margin-left: 5px;" (click)="finalizar(row)" *ngIf="!row.finalizado">
+        <button class="btn btn-info btn-sm" style="margin-left: 5px;" (click)="finalizar(row)" title="Finalizar"
+            *ngIf="!row.finalizado">
             <i class="fa-solid fa-check-double"></i>
         </button>
-        <button class="btn btn-danger btn-sm" style="margin-left: 5px;" (click)="delete(row)" *ngIf="!row.finalizado">
+        <button class="btn btn-danger btn-sm" style="margin-left: 5px;" (click)="delete(row)" title="Eliminar"
+            *ngIf="!row.finalizado">
             <i class="fas fa-trash"></i>
         </button>
     </ng-template>
@@ -73,11 +75,27 @@
     <h2 mat-dialog-title>{{ record.id ? 'Editar Solicitud' : 'Agregar Solicitud' }}</h2>
     <mat-dialog-content>
 
-        <!-- Campo Código: Solo en edición -->
-        <mat-form-field appearance="fill" class="w-100" *ngIf="record.id">
-            <mat-label>Código</mat-label>
-            <input matInput [(ngModel)]="record.codigo" maxlength="100" disabled>
-        </mat-form-field>
+        <div class="row mb-3" *ngIf="record.id">
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Código</div>
+                    <div class="info-value">{{ record.codigo }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Estado</div>
+                    <div class="info-value">{{ record.estadoStr }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Fecha Creación</div>
+                    <div class="info-value">{{ convertirFecha(record.fechaCreacion) }}</div>
+                </div>
+            </div>
+        </div>
+
 
         <!-- Campo Descripción -->
         <mat-form-field appearance="fill" class="w-100">
@@ -86,21 +104,13 @@
                 required></textarea>
         </mat-form-field>
 
-        <!-- Campo Fecha Creación -->
-        <mat-form-field appearance="fill" class="w-100">
+        <!--<mat-form-field appearance="fill" class="w-100" *ngIf="record.id">
             <mat-label>Fecha Creación</mat-label>
-            <input matInput [matDatepicker]="pickerCreacion" [(ngModel)]="record.fechaCreacion" required>
+            <input matInput [matDatepicker]="pickerCreacion" [(ngModel)]="record.fechaCreacion" required
+                [disabled]="true">
             <mat-datepicker-toggle matSuffix [for]="pickerCreacion"></mat-datepicker-toggle>
             <mat-datepicker #pickerCreacion></mat-datepicker>
-        </mat-form-field>
-
-
-        <!-- Campo Estado: Solo en edición -->
-        <mat-form-field appearance="fill" class="w-100" *ngIf="record.id">
-            <mat-label>Estado</mat-label>
-            <input matInput [value]="getEstadoDescripcion(record.estadoId!)" disabled>
-        </mat-form-field>
-
+        </mat-form-field>-->
 
         <!-- Proveedores -->
         <h5 class="mt-3">Proveedores*</h5>
@@ -120,6 +130,7 @@
                 <mat-form-field appearance="fill" class="w-100">
                     <mat-label>Producto</mat-label>
                     <mat-select [(ngModel)]="prod.productoId" required>
+                        <mat-option [value]="null">-- Seleccione --</mat-option>
                         <mat-option *ngFor="let p of getFilteredProductos(i)" [value]="p.id">
                             {{ p.nombre }}
                         </mat-option>
@@ -175,22 +186,124 @@
                             row.solicitudProveedor?.proveedor?.razonSocial}}</td>
                         <td>{{ row.estado?.descripcion }}</td>
                         <td>{{ row.comentario }}</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm" *ngIf="row.estado?.id==1 && !solicitudFinalizadoSelect" (click)="archivarCotizacion(row)">
-                                <i class="fa-solid fa-xmark"></i> 
-                            </button>
-                            <button class="btn btn-success btn-sm" *ngIf="row.estado?.id==1 && !solicitudFinalizadoSelect" (click)="aprobarCotizacion(row)"
-                                style="margin-left: 5px;">
-                                <i class="fa-solid fa-check"></i>
-                            </button>
+                        <td class="text-center">
+                            <div class="d-inline-flex align-items-center">
+                                <button class="btn btn-primary btn-sm" title="Ver Detalle"
+                                    (click)="verDetalleCotizacion(row)">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                                <button class="btn btn-success btn-sm" title="Aprobar"
+                                    *ngIf="row.estado?.id==1 && !solicitudFinalizadoSelect"
+                                    (click)="aprobarCotizacion(row)" style="margin-left: 5px;">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                                <button class="btn btn-warning btn-sm" title="Archivar" style="margin-left: 5px;"
+                                    *ngIf="row.estado?.id==1 && !solicitudFinalizadoSelect"
+                                    (click)="archivarCotizacion(row)">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <div class="acciones-modal">
-            <button class="btn-cerrar" (click)="dialogRef.close()">Cerrar</button>
-        </div>
+        <mat-dialog-actions align="end"> 
+            <button mat-button (click)="dialogRef.close()">Cerrar</button>
+        </mat-dialog-actions>
     </div>
+</ng-template>
+
+<ng-template #viewDetalleCotizacionTemplate>
+
+    <h2 mat-dialog-title>{{ 'Ver Cotización' }}</h2>
+    <mat-dialog-content>
+
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Código</div>
+                    <div class="info-value">{{ solicitudSelected.codigo }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Estado de Solicitud</div>
+                    <div class="info-value">{{ solicitudSelected.estado?.descripcion }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Estado de Cotización</div>
+                    <div class="info-value">{{ cotizacionSelected.estado?.descripcion }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Fecha Creación de Solicitud</div>
+                    <div class="info-value">{{ convertirFecha(solicitudSelected.fechaCreacion) }}</div>
+                </div>
+            </div>
+             <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Fecha Emisión de Cotización</div>
+                    <div class="info-value">{{ convertirFecha(cotizacionSelected.fechaEmision) }}</div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="info-block">
+                    <div class="info-label">Descripción</div>
+                    <div class="info-value">{{ solicitudSelected.descripcion }}</div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="info-block">
+                    <div class="info-label">Comentario</div>
+                    <div class="info-value">{{ cotizacionSelected.comentario }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center mt-3 mb-2">
+            <h5 class="mb-0 me-2">Productos cotizados</h5>
+            <small class="text-muted fst-italic">(Los precios unitarios considerados incluyen el IGV)</small>
+        </div>
+        <div class="tabla-container">
+            <table class="tabla-cotizaciones">
+                <thead>
+                    <tr>
+                        <th>Nro.</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Precio Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let row of cotizacionSelected.cotizacionProducto">
+                        <td>{{ row.row }}</td>
+                        <td>{{ row.producto?.nombre }}</td>
+                        <td>{{ row.cantidadCotizada }}</td>
+                        <td>{{ row.precioUnitario }} </td>
+                        <td>{{ calcularMontoTotalPorProducto(row.cantidadCotizada,row.precioUnitario) }}</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="fila-subtotal">
+                        <td colspan="4" class="text-end"><strong>Subtotal</strong></td>
+                        <td>{{ calcularSubtotal() | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr class="fila-total">
+                        <td colspan="4" class="text-end"><strong>Total (incluye IGV)</strong></td>
+                        <td>{{ cotizacionSelected.monto| number:'1.2-2' }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button mat-button (click)="dialogRefAux.close()">Cerrar</button>
+    </mat-dialog-actions>
+
 </ng-template>
