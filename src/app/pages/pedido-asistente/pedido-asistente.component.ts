@@ -90,28 +90,31 @@ export class PedidoAsistenteComponent implements OnInit {
     }    
 
     search() {
-            forkJoin({
-                resultResponse: this.service.list(this.filter)
-            }).subscribe({
-                next: ({ resultResponse }) => {
-                    this.result = [...setListRow(resultResponse)];
-                    this.initTable();
-                },
-                error: (err) => {
-                    Swal.close();
-                    Swal.fire({
-                        icon: 'warning',
-                        title: '¡Advertencia!',
-                        text: err.error,
-                    });
-                }
-            });
+        forkJoin({
+            resultResponse: this.service.list(this.filter)
+        }).subscribe({
+            next: ({ resultResponse }) => {
+                this.result = [...setListRow(resultResponse)].filter(pedido => 
+                    pedido.estado?.descripcion !== 'GENERADO' && 
+                    pedido.estado?.descripcion !== 'DEVUELTO' &&
+                    pedido.estado?.descripcion !== 'CON CONFORMIDAD'
+                );
+                this.initTable();
+            },
+            error: (err) => {
+                Swal.close();
+                Swal.fire({
+                    icon: 'warning',
+                    title: '¡Advertencia!',
+                    text: err.error,
+                });
+            }
+        });
     }
 
     openDetallePedido(pedido: PedidoResponse) {
-        // Limpiamos los datos anteriores
         this.record = {} as PedidoResponse;
-        this.observacionEnvio = '';
+        this.observacionEnvio = pedido.observacionEnvio || '';
 
         forkJoin({
             resultResponse: this.service.find({ id: pedido.id })
@@ -131,7 +134,6 @@ export class PedidoAsistenteComponent implements OnInit {
                     }))
                 };
                 
-                // Cargar observación de envío si existe
                 this.observacionEnvio = resultResponse.observacionEnvio || '';
             },
             error: (err) => {
@@ -167,7 +169,6 @@ export class PedidoAsistenteComponent implements OnInit {
         const totalCalculado = this.calcularTotal(pedido);
         const totalBackend = pedido.montoTotal || 0;
         
-        // Usamos 0.01 como margen para diferencias por decimales
         const diferencia = Math.abs(totalCalculado - totalBackend);
         const coincide = diferencia < 0.01;
         
@@ -182,12 +183,12 @@ export class PedidoAsistenteComponent implements OnInit {
     private initTable() {
         this.columns = [
             { name: 'Nro.', prop: 'row', width: 50 },
-            { name: 'Código', prop: 'codigo', width: 100 },
-            { name: 'Estado', prop: 'estado.descripcion', width: 120 },  
-            { name: 'Proveedor', prop: 'proveedor.razonSocial', width: 120 },
-            { name: 'Descripción', prop: 'descripcion', width: 100 },
+            { name: 'Código', prop: 'codigo', width: 70 },
+            { name: 'Estado', prop: 'estado.descripcion', width: 100 },  
+            { name: 'Proveedor', prop: 'proveedor.razonSocial', width: 150 },
+            { name: 'Descripción', prop: 'descripcion', width: 120 },
             { name: 'Monto Total', prop: 'montoTotal', pipe: { transform: (m: number) => `S/ ${m?.toFixed(2) || '0.00'}` }, width: 100 },
-            { name: 'F. Registro', prop: 'fechaRegistro', pipe: { transform: (d: Date) => d ? new Date(d).toLocaleDateString() : '' }, width: 120 },
+            { name: 'F. Registro', prop: 'fechaRegistro', pipe: { transform: (d: Date) => d ? new Date(d).toLocaleDateString() : '' }, width: 100 },
             { name: 'Acciones', cellTemplate: this.colAccionTemplate, width: 120 }
         ];
     }
