@@ -1,63 +1,71 @@
 <div class="mb-4">
-    <h1>Pedidos Recibidos</h1>
-    <hr>
+  <h1>Pedidos Recibidos</h1>
+  <hr>
 </div>
 
 <div class="container mb-3">
-    <div class="row">
-        <div class="col-md-3 mb-3">
-            <mat-form-field appearance="fill" class="w-100">
-                <mat-label>Estado</mat-label>
-                <mat-select [(ngModel)]="filter.estadoId">
-                    <mat-option [value]="null">Todas</mat-option>
-                    <mat-option *ngFor="let est of listEstados" [value]="est.id">
-                        {{ est.descripcion }}
-                    </mat-option>
-                </mat-select>
-            </mat-form-field>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <mat-form-field appearance="fill" class="w-100">
-                <mat-label>Buscar por Código</mat-label>
-                <input matInput [(ngModel)]="filter.codigo" (input)="RG.text($event)" maxlength="200">
-            </mat-form-field>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <mat-form-field appearance="fill" class="w-100">
-                <mat-label>Buscar por Descripción</mat-label>
-                <input matInput [(ngModel)]="filter.descripcion" (input)="RG.text($event)" maxlength="200">
-            </mat-form-field>
-        </div>        
-
-        <div class="col-md-3 d-flex justify-content-start align-items-center mb-3">
-            <button class="btn btn-primary" (click)="search()" title="Buscar">
-                <i class="fas fa-search"></i>
-            </button>
-            <button class="btn btn-secondary" (click)="cleanSearch()" tittel="Limpiar" style="margin-left: 10px;">
-                <i class="fas fa-eraser"></i>
-            </button>
-        </div>
-
-        <div class="col-md-6 mb-3">
-        <mat-form-field appearance="fill" class="w-100">
-            <mat-label>Buscar por Proveedor</mat-label>
-            <input matInput [(ngModel)]="filter.proveedor" (input)="RG.text($event)" maxlength="200">
-        </mat-form-field>
-      </div>
-
+  <div class="row">
+    <div class="col-md-3 mb-3">
+      <mat-form-field appearance="fill" class="w-100">
+        <mat-label>Estado</mat-label>
+        <mat-select [(ngModel)]="filter.estadoId">
+          <mat-option [value]="null">Todas</mat-option>
+          <mat-option *ngFor="let est of listEstados" [value]="est.id">
+            {{ est.descripcion }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
     </div>
+
+    <div class="col-md-3 mb-3">
+      <mat-form-field appearance="fill" class="w-100">
+        <mat-label>Buscar por Código</mat-label>
+        <input matInput [(ngModel)]="filter.codigo" (input)="RG.text($event)" maxlength="200">
+      </mat-form-field>
+    </div>
+
+    <div class="col-md-3 mb-3">
+      <mat-form-field appearance="fill" class="w-100">
+        <mat-label>Buscar por Descripción</mat-label>
+        <input matInput [(ngModel)]="filter.descripcion" (input)="RG.text($event)" maxlength="200">
+      </mat-form-field>
+    </div>
+
+    <div class="col-md-3 d-flex justify-content-start align-items-center mb-3">
+      <button class="btn btn-primary" (click)="search()" title="Buscar">
+        <i class="fas fa-search"></i>
+      </button>
+      <button class="btn btn-secondary" (click)="cleanSearch()" tittel="Limpiar" style="margin-left: 10px;">
+        <i class="fas fa-eraser"></i>
+      </button>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <mat-form-field appearance="fill" class="w-100">
+        <mat-label>Buscar por Proveedor</mat-label>
+        <input matInput [(ngModel)]="filter.proveedor" (input)="RG.text($event)" maxlength="200">
+      </mat-form-field>
+    </div>
+
+  </div>
 </div>
 
 <ngx-datatable class="bootstrap" [rows]="result" [columns]="columns" [limit]="5" [columnMode]="'force'"
-    [headerHeight]="50" [footerHeight]="50" [rowHeight]="'auto'">    
-    
-    <ng-template #colAccionTemplate let-row="row">
-        <button class="btn btn-primary btn-sm" style="margin-left: 5px;" (click)="openDetallePedido(row)" title="Ver">
-            <i class="fas fa-eye"></i>
-        </button>
-    </ng-template>
+  [headerHeight]="50" [footerHeight]="50" [rowHeight]="'auto'">
+
+  <ng-template #colAccionTemplate let-row="row">
+    <button class="btn btn-primary btn-sm" style="margin-left: 5px;" (click)="openDetallePedido(row)" title="Ver">
+      <i class="fas fa-eye"></i>
+    </button>
+    <button class="btn btn-success btn-sm" style="margin-left: 5px;" *ngIf="row.esEnviado" (click)="darConformidad(row)"
+      title="Dar Conformidad">
+      <i class="fa-solid fa-circle-check"></i>
+    </button>
+    <button class="btn btn-warning btn-sm" style="margin-left: 5px;" *ngIf="row.esEnviado" (click)="openDevolver(row)"
+      title="Devolver">
+      <i class="fa-solid fa-rotate-left"></i>
+    </button>
+  </ng-template>
 </ngx-datatable>
 
 <ng-template #detallePedidoTemplate>
@@ -176,5 +184,58 @@
 
   <mat-dialog-actions align="end">
     <button mat-button (click)="dialogRef.close()">Cancelar</button>
+  </mat-dialog-actions>
+</ng-template>
+
+
+<ng-template #devolverTemplate>
+  <h2 mat-dialog-title>Detalle del Pedido #{{record.codigo}}</h2>
+  <mat-dialog-content class="factura-content">
+
+    <div class="row mb-3">
+      <div class="col-12">
+        <h4>Información General</h4>
+      </div>
+
+      <div class="col-md-4">
+        <div class="info-block">
+          <div class="info-label">Proveedor:</div>
+          <div class="info-value">{{ record.proveedor?.razonSocial }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="info-block">
+          <div class="info-label">RUC:</div>
+          <div class="info-value">{{ record.proveedor?.ruc }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="info-block">
+          <div class="info-label">Estado:</div>
+          <div class="info-value">{{ record.estado?.descripcion }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="info-block">
+          <div class="info-label">Fecha de Registro:</div>
+          <div class="info-value">{{ convertirFecha(record.fechaRegistro) }}</div>
+        </div>
+      </div>
+
+      <mat-form-field appearance="fill" class="w-100">
+        <mat-label>Observación de Envío</mat-label>
+        <textarea matInput rows="3" [(ngModel)]="record.observacionEnvio" maxlength="500" required 
+          (input)="RG.text($event)"></textarea>
+      </mat-form-field>
+
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="dialogRef.close()">Cancelar</button>
+    <button mat-flat-button color="primary" (click)="devolver()">Devolver</button>
   </mat-dialog-actions>
 </ng-template>
