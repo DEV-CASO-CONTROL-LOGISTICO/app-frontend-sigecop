@@ -46,5 +46,12 @@ export class PedidoService {
     devolver(filter: PedidoRequest): Observable<PedidoResponse> {
         return this.http.post<PedidoResponse>(`${BASE_URL}/pedido/devolver`, filter);
     }
+    enviarArchivoFactura(formData: FormData): Observable<any> {
+        return this.http.post<any>(`${BASE_URL}/pedido/uploadFactura`, formData);
+    }
+
+    enviarArchivoGuia(formData: FormData): Observable<any> {
+        return this.http.post<any>(`${BASE_URL}/pedido/uploadGuia`, formData);
+    }
 
 }

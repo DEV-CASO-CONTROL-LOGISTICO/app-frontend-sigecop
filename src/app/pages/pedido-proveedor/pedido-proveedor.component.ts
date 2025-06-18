@@ -226,18 +226,85 @@ export class PedidoProveedorComponent implements OnInit {
         const file = event.target.files && event.target.files[0];
         if (file && file.type === 'application/pdf') {
             this.facturaFile = file;
+            this.archivoFactura = file.name;
+            console.log('Factura file selected:', this.facturaFile);
         } else {
             Swal.fire('Error', 'Solo se permite subir archivos PDF para la factura.', 'error');
         }
     }
 
     onGuiaFileChange(event: any) {
-        const file = event.target.files && event.target.files[0];
-        if (file && file.type === 'application/pdf') {
-            this.guiaFile = file;
+        console.log('onGuiaFileChange', event);
+        const fileGuia = event.target.files && event.target.files[0];
+        if (fileGuia && fileGuia.type === 'application/pdf') {
+            this.guiaFile = fileGuia;
+            this.archivoGuia = fileGuia.name;
+            console.log('Guía file selected:', this.guiaFile);
         } else {
             Swal.fire('Error', 'Solo se permite subir archivos PDF para la guía.', 'error');
         }
+    }
+
+    // Método para enviar archivo de factura
+    enviarArchivoFactura() {
+        if (!this.facturaFile || !this.record.id) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Archivo o ID faltante',
+                text: 'Debe seleccionar un archivo de factura PDF y tener un pedido válido.',
+            });
+            return;
+        }
+        const formData = new FormData();
+        formData.append('file', this.facturaFile);
+        formData.append('pedidoId', this.record.id.toString());
+        this.service.enviarArchivoFactura(formData).subscribe({
+            next: () => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Factura enviada',
+                    text: 'El archivo de factura se envió correctamente.'
+                });
+            },
+            error: (err: any) => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.error || 'No se pudo enviar el archivo de factura.'
+                });
+            }
+        });
+    }
+
+    // Método para enviar archivo de guía
+    enviarArchivoGuia() {
+        if (!this.guiaFile || !this.record.id) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Archivo o ID faltante',
+                text: 'Debe seleccionar un archivo de guía PDF y tener un pedido válido.',
+            });
+            return;
+        }
+        const formData = new FormData();
+        formData.append('file', this.guiaFile);
+        formData.append('pedidoId', this.record.id.toString());
+        this.service.enviarArchivoGuia(formData).subscribe({
+            next: () => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Guía enviada',
+                    text: 'El archivo de guía se envió correctamente.'
+                });
+            },
+            error: (err: any) => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.error || 'No se pudo enviar el archivo de guía.'
+                });
+            }
+        });
     }
 
     private initTable() {
@@ -263,6 +330,32 @@ export class PedidoProveedorComponent implements OnInit {
             });
             return;
         }
+        if (!this.facturaFile || !this.record.id) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Archivo o ID faltante',
+                text: 'Debe seleccionar un archivo de factura PDF y tener un pedido válido.',
+            });
+            return;
+        }
+        const formDataFactura = new FormData();
+        formDataFactura.append('file', this.facturaFile);
+        formDataFactura.append('pedidoId', this.record.id.toString());
+        formDataFactura.append('numero', this.record.numeroFactura);
+
+         if (!this.guiaFile || !this.record.id) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Archivo o ID faltante',
+                text: 'Debe seleccionar un archivo de guía PDF y tener un pedido válido.',
+            });
+            return;
+        }
+        const formDataGuia = new FormData();
+        formDataGuia.append('file', this.guiaFile);
+        formDataGuia.append('pedidoId', this.record.id.toString());
+        formDataGuia.append('numero', this.record.numeroGuia);
+
         // Transformar record a filterEnvio
         this.filterEnvio = {
             id: this.record.id,
@@ -272,12 +365,13 @@ export class PedidoProveedorComponent implements OnInit {
             fechaRegistro: this.record.fechaRegistro,
             fechaEntrega: this.record.fechaEntrega,
             observacionEnvio: this.observacionEnvio,
-            // Agrega aquí otros campos necesarios según la definición de PedidoRequest
         };
         forkJoin({
-            resultResponse: this.service.enviarPedido(this.filterEnvio)
+            resultResponse: this.service.enviarPedido(this.filterEnvio),
+            facturaResponse: this.service.enviarArchivoFactura(formDataFactura),
+            guiaResponse: this.service.enviarArchivoGuia(formDataGuia)
         }).subscribe({
-            next: ({ resultResponse }) => {
+            next: ({ resultResponse ,facturaResponse,guiaResponse }) => {
                 Swal.close();
                 Swal.fire({
                     icon: 'success',

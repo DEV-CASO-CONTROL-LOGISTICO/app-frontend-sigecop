@@ -180,12 +180,10 @@
                 <input type="file" class="file-input" (change)="onFacturaFileChange($event)" #fileUpload>
 
                 <div class="file-upload">
-
-                    {{archivoFactura || "Archivo no subido de la Factura"}}
-
-                    <button mat-mini-fab color="primary" class="upload-btn" (click)="fileUpload.click()">
+                     <button mat-mini-fab color="primary" class="upload-btn" (click)="fileUpload.click()" style="margin-right: 15px;">
                         <mat-icon>attach_file</mat-icon>
                     </button>
+                    {{archivoFactura || "Archivo no subido de la Factura"}}
                 </div>
             </div>
             <!--<div class="col-md-6 mb-2">
@@ -207,15 +205,13 @@
                 </mat-form-field>
             </div>-->
             <div class="col-md-6 mb-2">
-                <input type="file" class="file-input" (change)="onGuiaFileChange($event)" #fileUpload>
+                <input type="file" class="file-input" (change)="onGuiaFileChange($event)" #fileUploadGuia>
 
                 <div class="file-upload">
-
-                    {{archivoGuia || "Archivo no subido de la Guia"}}
-
-                    <button mat-mini-fab color="primary" class="upload-btn" (click)="fileUpload.click()">
+                    <button mat-mini-fab color="primary" class="upload-btn" (click)="fileUploadGuia.click()" style="margin-right: 15px;">
                         <mat-icon>attach_file</mat-icon>
                     </button>
+                    {{archivoGuia || "Archivo no subido de la Guia"}}
                 </div>
             </div>
             <div class="col-md-6 mb-2">
@@ -243,11 +239,11 @@
             
             
         </div>
-
+        <!--
         <mat-form-field appearance="fill" class="w-100">
             <mat-label>Observación de Envío</mat-label>
             <textarea matInput rows="3" [(ngModel)]="observacionEnvio" maxlength="500" (input)="RG.text($event)"></textarea>
-        </mat-form-field>
+        </mat-form-field>-->
 
     </mat-dialog-content>
 
