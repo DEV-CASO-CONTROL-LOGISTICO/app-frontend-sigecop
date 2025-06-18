@@ -40,5 +40,11 @@ export class PedidoService {
     findByProveedor(filter: PedidoRequest): Observable<PedidoResponse[]> {
         return this.http.post<PedidoResponse[]>(`${BASE_URL}/pedido/pedidoProveedor`, filter);
     }
+    darConformidad(filter: PedidoRequest): Observable<PedidoResponse> {
+        return this.http.post<PedidoResponse>(`${BASE_URL}/pedido/darConformidad`, filter);
+    }
+    devolver(filter: PedidoRequest): Observable<PedidoResponse> {
+        return this.http.post<PedidoResponse>(`${BASE_URL}/pedido/devolver`, filter);
+    }
 
 }

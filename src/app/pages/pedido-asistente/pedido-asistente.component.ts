@@ -4,7 +4,7 @@ import { forkJoin } from 'rxjs';
 import Swal from 'sweetalert2';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { CommonModule } from '@angular/common';
-import { calcularTotal, convertirIsoADDMMAAAA, setListRow } from '../../util/methods';
+import { calcularTotal, convertirIsoADDMMAAAA, handleError, setListRow } from '../../util/methods';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -47,13 +47,14 @@ export class PedidoAsistenteComponent implements OnInit {
     filter: PedidoRequest = {};
     record: PedidoResponse = {};
     columns: any[] = [];
-    
+
     listEstados: EstadoPedidoResponse[] = [];
     listProductos: ProductoResponse[] = [];
     observacionEnvio: string = '';
 
     @ViewChild('colAccionTemplate', { static: true }) colAccionTemplate!: TemplateRef<any>;
     @ViewChild('detallePedidoTemplate', { static: true }) detallePedidoTemplate!: TemplateRef<any>;
+    @ViewChild('devolverTemplate', { static: true }) devolverTemplate!: TemplateRef<any>;
     dialogRef!: MatDialogRef<any>;
 
     constructor(
@@ -87,7 +88,7 @@ export class PedidoAsistenteComponent implements OnInit {
     cleanSearch() {
         this.filter = {};
         this.search();
-    }    
+    }
 
     search() {
         forkJoin({
@@ -119,7 +120,7 @@ export class PedidoAsistenteComponent implements OnInit {
     openDetallePedido(pedido: PedidoResponse) {
         this.record = {} as PedidoResponse;
         this.observacionEnvio = pedido.observacionEnvio || '';
-        
+
         forkJoin({
             resultResponse: this.service.find({ id: pedido.id })
         }).subscribe({
@@ -138,7 +139,7 @@ export class PedidoAsistenteComponent implements OnInit {
                         monto: pp.monto
                     }))
                 };
-                
+
                 this.observacionEnvio = resultResponse.observacionEnvio || '';
             },
             error: (err) => {
@@ -151,7 +152,7 @@ export class PedidoAsistenteComponent implements OnInit {
             }
         });
 
-        this.dialogRef = this.dialog.open(this.detallePedidoTemplate, { width: '800px'});
+        this.dialogRef = this.dialog.open(this.detallePedidoTemplate, { width: '800px' });
     }
 
     validarCantidad(event: any) {
@@ -181,11 +182,74 @@ export class PedidoAsistenteComponent implements OnInit {
             }, 0);
     }
 
+    darConformidad(item: PedidoResponse) {
+        Swal.fire({
+            title: 'Dar Conformidad',
+            text: `¿Está seguro de dar conformidad al pedido ${item.codigo}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.service.darConformidad({ id: item.id }).subscribe({
+                    next: () => {
+                        Swal.fire('Éxito', 'Pedido conforme', 'success');
+                        this.search();
+                        this.cdr.detectChanges();
+                    },
+                    error: (err) => {
+                        handleError(err);
+                    }
+                });
+            }
+        });
+    }
+
+    openDevolver(item: PedidoResponse) {
+        this.record = item;
+        this.record.observacionEnvio = "";
+        this.dialogRef = this.dialog.open(this.devolverTemplate, { width: '800px' });
+    }
+
+    devolver() {
+        if (!this.record.observacionEnvio) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Debe ingresar la observación encontrada',
+            });
+            return;
+        }
+        Swal.fire({
+            title: 'Devolver Pedido',
+            text: `¿Está seguro de devolver el pedido ${this.record.codigo}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.service.devolver({ id: this.record.id }).subscribe({
+                    next: () => {
+                        this.search();
+                        Swal.close();
+                        Swal.fire('Éxito', 'Pedido Devuelto', 'success');
+                        this.cdr.detectChanges();
+                        this.dialogRef.close();
+                    },
+                    error: (err) => {
+                        handleError(err);
+                    }
+                });
+            }
+        });
+    }
+
     private initTable() {
         this.columns = [
             { name: 'Nro.', prop: 'row', width: 50 },
             { name: 'Código', prop: 'codigo', width: 70 },
-            { name: 'Estado', prop: 'estado.descripcion', width: 100 },  
+            { name: 'Estado', prop: 'estado.descripcion', width: 100 },
             { name: 'Proveedor', prop: 'proveedor.razonSocial', width: 150 },
             { name: 'Descripción', prop: 'descripcion', width: 120 },
             { name: 'Monto Total', prop: 'montoTotal', pipe: { transform: (m: number) => `S/ ${m?.toFixed(2) || '0.00'}` }, width: 100 },
