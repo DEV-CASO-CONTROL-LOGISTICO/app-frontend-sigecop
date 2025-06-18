@@ -254,6 +254,15 @@ export class PedidoProveedorComponent implements OnInit {
     }
 
     enviar(){
+        // Validación de campos obligatorios
+        if (!this.record.numeroFactura || !this.record.numeroGuia || !this.record.serieGuia || !this.record.fechaRegistro || !this.record.fechaEntrega) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Campos obligatorios',
+                text: 'Debe completar todos los campos obligatorios: Número de Factura, Número de Guía, Serie de Guía, Fecha Emisión y Fecha Estimada Entrega.',
+            });
+            return;
+        }
         // Transformar record a filterEnvio
         this.filterEnvio = {
             id: this.record.id,
@@ -262,7 +271,7 @@ export class PedidoProveedorComponent implements OnInit {
             serieGuia: this.record.serieGuia,
             fechaRegistro: this.record.fechaRegistro,
             fechaEntrega: this.record.fechaEntrega,
-            observacionEnvio: this.observacionEnvio
+            observacionEnvio: this.observacionEnvio,
             // Agrega aquí otros campos necesarios según la definición de PedidoRequest
         };
         forkJoin({
