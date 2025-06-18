@@ -43,7 +43,7 @@
         <div class="col-md-6 mb-3">
         <mat-form-field appearance="fill" class="w-100">
             <mat-label>Buscar por Proveedor</mat-label>
-            <input matInput [(ngModel)]="filter.proveedor" (input)="RG.text($event)" maxlength="200">
+            <input matInput [(ngModel)]="filter.proveedorRazonSocial" (input)="RG.text($event)" maxlength="200">
         </mat-form-field>
       </div>
 
@@ -129,6 +129,14 @@
         </div>
       </div>
 
+      <div class="col-md-12 mb-3" *ngIf="record.esDevuelto">
+        <div class="info-block">
+          <div class="info-label">OBSERVACIÓN DE ENVÍO:</div>
+          <div class="info-value">{{ record.observacionEnvio }}</div>
+        </div>
+      </div>
+    </div>
+
       <div class="col-12 mt-4">
         <h4>Productos</h4>
         <div class="tabla-container">
@@ -164,14 +172,7 @@
           </table>
         </div>
       </div>
-
-      <div class="col-md-12 mb-3">
-        <div class="info-block">
-          <div class="info-label">OBSERVACIÓN DE ENVÍO:</div>
-          <div class="info-value">{{ record.observacionEnvio }}</div>
-        </div>
-      </div>
-    </div>
+      
   </mat-dialog-content>
 
   <mat-dialog-actions align="end">

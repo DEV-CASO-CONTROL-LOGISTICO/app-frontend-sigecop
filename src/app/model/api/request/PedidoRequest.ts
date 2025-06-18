@@ -6,7 +6,8 @@ export class PedidoRequest extends ClassGeneric{
 
     id?: number;
     codigo?: String;
-    proveedor?: number;
+    proveedorId?: number;
+    proveedorRazonSocial?: string;
     estadoId?: number;  
     descripcion?: string;
     observacion?: string;
