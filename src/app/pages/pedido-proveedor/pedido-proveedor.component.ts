@@ -11,6 +11,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatIconModule } from '@angular/material/icon';
 import { PedidoResponse } from '../../model/api/response/PedidoResponse';
 import { ProductoResponse } from '../../model/api/response/ProductoResponse';
 import { EstadoPedidoResponse } from '../../model/api/response/EstadoPedidoResponse';
@@ -33,7 +34,8 @@ import { PedidoProductoResponse } from '../../model/api/response/PedidoProductoR
         MatButtonModule,
         MatSelectModule,
         MatDatepickerModule,
-        FormsModule
+        FormsModule,
+        MatIconModule
     ],
     templateUrl: './pedido-proveedor.component.html',
     styleUrl: './pedido-proveedor.component.css'
@@ -49,8 +51,15 @@ export class PedidoProveedorComponent implements OnInit {
     listProductos: ProductoResponse[] = [];
     observacionEnvio: string = '';
 
+    facturaFile?: File;
+    guiaFile?: File;
+    archivoGuia?: String;
+    archivoFactura?: String;
+    filterEnvio: PedidoRequest = {};
+
     @ViewChild('colAccionTemplate', { static: true }) colAccionTemplate!: TemplateRef<any>;
     @ViewChild('detallePedidoTemplate', { static: true }) detallePedidoTemplate!: TemplateRef<any>;
+    @ViewChild('enviarPedidoTemplate', { static: true }) enviarPedidoTemplate!: TemplateRef<any>;
     dialogRef!: MatDialogRef<any>;
 
     constructor(
@@ -143,6 +152,41 @@ export class PedidoProveedorComponent implements OnInit {
         });
     }
 
+    openEnviarPedido(pedido: PedidoResponse) {
+        this.record = {} as PedidoResponse;
+        this.observacionEnvio = pedido.observacionEnvio || '';
+
+        forkJoin({
+            resultResponse: this.service.find({ id: pedido.id })
+        }).subscribe({
+            next: ({ resultResponse }) => {
+                this.record = {
+                    ...resultResponse,
+                    pedidoProducto: (resultResponse.pedidoProducto ?? []).map(pp => ({
+                        id: pp.id,
+                        cantidad: pp.cantidad,                        
+                        producto: {
+                            id: pp.producto?.id,
+                            nombre: pp.producto?.nombre,
+                            codigo: pp.producto?.id,
+                            precioUnitario: pp.producto?.precioUnitario
+                        }
+                    }))
+                };
+                
+                this.observacionEnvio = resultResponse.observacionEnvio || '';
+            },
+            error: (err) => {
+                Swal.fire('Error', 'No se pudo cargar el detalle del pedido', 'error');
+            }
+        });
+
+        this.dialogRef = this.dialog.open(this.enviarPedidoTemplate, {
+            width: '1000px',
+            maxWidth: 'none'
+        });
+    }
+
     calcularSubTotal(producto: PedidoProductoResponse): number {
         const cantidad = producto.cantidad ?? 0;
         const precio = producto.producto?.precioUnitario ?? 0;
@@ -177,16 +221,70 @@ export class PedidoProveedorComponent implements OnInit {
         };
     }
 
+    onFacturaFileChange(event: any) {
+        const file = event.target.files && event.target.files[0];
+        if (file && file.type === 'application/pdf') {
+            this.facturaFile = file;
+        } else {
+            Swal.fire('Error', 'Solo se permite subir archivos PDF para la factura.', 'error');
+        }
+    }
+
+    onGuiaFileChange(event: any) {
+        const file = event.target.files && event.target.files[0];
+        if (file && file.type === 'application/pdf') {
+            this.guiaFile = file;
+        } else {
+            Swal.fire('Error', 'Solo se permite subir archivos PDF para la guía.', 'error');
+        }
+    }
+
     private initTable() {
         this.columns = [
             { name: 'Nro.', prop: 'row', width: 50 },
             { name: 'Código', prop: 'codigo', width: 70 },
             { name: 'Estado', prop: 'estado.descripcion', width: 100 },  
-            { name: 'Proveedor', prop: 'proveedor.razonSocial', width: 150 },
+            //{ name: 'Proveedor', prop: 'proveedor.razonSocial', width: 150 },
             { name: 'Descripción', prop: 'descripcion', width: 120 },
             { name: 'Monto Total', prop: 'montoTotal', pipe: { transform: (m: number) => `S/ ${m?.toFixed(2) || '0.00'}` }, width: 100 },
             { name: 'F. Registro', prop: 'fechaRegistro', pipe: { transform: (d: Date) => d ? new Date(d).toLocaleDateString() : '' }, width: 100 },
             { name: 'Acciones', cellTemplate: this.colAccionTemplate, width: 120 }
         ];
+    }
+
+    enviar(){
+        // Transformar record a filterEnvio
+        this.filterEnvio = {
+            id: this.record.id,
+            numeroFactura: this.record.numeroFactura,
+            numeroGuia: this.record.numeroGuia,
+            serieGuia: this.record.serieGuia,
+            fechaRegistro: this.record.fechaRegistro,
+            fechaEntrega: this.record.fechaEntrega,
+            observacionEnvio: this.observacionEnvio
+            // Agrega aquí otros campos necesarios según la definición de PedidoRequest
+        };
+        forkJoin({
+            resultResponse: this.service.enviarPedido(this.filterEnvio)
+        }).subscribe({
+            next: ({ resultResponse }) => {
+                Swal.close();
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Éxito!',
+                    text: 'El pedido se ha enviado correctamente.',
+                });
+                this.dialogRef.close();
+                this.initTable();
+            },
+            error: (err) => {
+                Swal.close();
+                Swal.fire({
+                    icon: 'warning',
+                    title: '¡Advertencia!',
+                    text: err.error,
+                });
+            }
+        });
     }
 }

@@ -34,8 +34,11 @@ export class PedidoService {
             body: { id: id }
         });
     }
+    enviarPedido(filter: PedidoRequest): Observable<PedidoResponse> {
+        return this.http.post<PedidoResponse>(`${BASE_URL}/pedido/enviar`, filter);
+    }
     findByProveedor(filter: PedidoRequest): Observable<PedidoResponse[]> {
-            return this.http.post<PedidoResponse[]>(`${BASE_URL}/pedido/pedidoProveedor`, filter);
-        }
+        return this.http.post<PedidoResponse[]>(`${BASE_URL}/pedido/pedidoProveedor`, filter);
+    }
 
 }
