@@ -12,15 +12,15 @@ export class TipoInternamientoService {
   constructor(private http: HttpClient) { }
 
   list(filter: TipoInternamiento): Observable<TipoInternamiento[]> {
-          return this.http.post<TipoInternamiento[]>(`${BASE_URL}/proveedor/list`, filter);
+          return this.http.post<TipoInternamiento[]>(`${BASE_URL}/tipo/list`, filter);
   }
   
   save(filter: TipoInternamiento): Observable<TipoInternamiento> {
-          return this.http.post<TipoInternamiento>(`${BASE_URL}/proveedor/save`, filter);
+          return this.http.post<TipoInternamiento>(`${BASE_URL}/tipo/save`, filter);
   }
   
   delete(filter: TipoInternamiento): Observable<TipoInternamiento> {
-          return this.http.delete<TipoInternamiento>(`${BASE_URL}/proveedor/delete`, {
+          return this.http.delete<TipoInternamiento>(`${BASE_URL}/tipo/delete`, {
               body: filter
           });
   }

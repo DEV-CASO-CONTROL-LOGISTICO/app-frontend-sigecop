@@ -13,14 +13,14 @@ export class OrdenInternamientoService {
   constructor(private http: HttpClient) { }
 
   list(filter: OrdenInternamientoRequest): Observable<OrdenInternamientoResponse[]> {
-          return this.http.post<OrdenInternamientoResponse[]>(`${BASE_URL}/pedido/list`, filter);
+          return this.http.post<OrdenInternamientoResponse[]>(`${BASE_URL}/OrdenInternamiento/list`, filter);
   }
   
   save(filter: OrdenInternamientoRequest): Observable<OrdenInternamientoResponse> {
-          return this.http.post<OrdenInternamientoResponse>(`${BASE_URL}/pedido/save`, filter);
+          return this.http.post<OrdenInternamientoResponse>(`${BASE_URL}/OrdenInternamiento/save`, filter);
   }
   
   find(filter: OrdenInternamientoRequest): Observable<OrdenInternamientoResponse> {
-          return this.http.post<OrdenInternamientoResponse>(`${BASE_URL}/pedido/find`, filter);
+          return this.http.post<OrdenInternamientoResponse>(`${BASE_URL}/OrdenInternamiento/find`, filter);
   }
 }
