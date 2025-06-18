@@ -1,5 +1,5 @@
 <div class="mb-4">
-    <h1>Gestión de Pedidos Recibidos</h1>
+    <h1>Pedidos Recibidos</h1>
     <hr>
 </div>
 
@@ -29,105 +29,152 @@
                 <mat-label>Buscar por Descripción</mat-label>
                 <input matInput [(ngModel)]="filter.descripcion" (input)="RG.text($event)" maxlength="200">
             </mat-form-field>
-        </div>
+        </div>        
 
         <div class="col-md-3 d-flex justify-content-start align-items-center mb-3">
-            <button class="btn btn-primary" (click)="search()">
+            <button class="btn btn-primary" (click)="search()" title="Buscar">
                 <i class="fas fa-search"></i>
             </button>
-            <button class="btn btn-secondary" (click)="cleanSearch()" style="margin-left: 10px;">
+            <button class="btn btn-secondary" (click)="cleanSearch()" tittel="Limpiar" style="margin-left: 10px;">
                 <i class="fas fa-eraser"></i>
             </button>
         </div>
+
+        <div class="col-md-6 mb-3">
+        <mat-form-field appearance="fill" class="w-100">
+            <mat-label>Buscar por Proveedor</mat-label>
+            <input matInput [(ngModel)]="filter.proveedor" (input)="RG.text($event)" maxlength="200">
+        </mat-form-field>
+      </div>
+
     </div>
 </div>
 
 <ngx-datatable class="bootstrap" [rows]="result" [columns]="columns" [limit]="5" [columnMode]="'force'"
     [headerHeight]="50" [footerHeight]="50" [rowHeight]="'auto'">    
+    
     <ng-template #colAccionTemplate let-row="row">
-        <button class="btn btn-info btn-sm" (click)="openDetallePedido(row)">
-            <i class="fas fa-eye"></i> Ver
+        <button class="btn btn-primary btn-sm" style="margin-left: 5px;" (click)="openDetallePedido(row)" title="Ver">
+            <i class="fas fa-eye"></i>
         </button>
     </ng-template>
 </ngx-datatable>
 
 <ng-template #detallePedidoTemplate>
-    <h2 mat-dialog-title>Detalle del Pedido #{{record.codigo}}</h2>
-    <mat-dialog-content class="factura-content">
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <h4>Información General</h4>
-                <p><strong>Proveedor:</strong> {{record.proveedor?.razonSocial}}</p>
-                <p><strong>RUC:</strong> {{record.proveedor?.ruc}}</p>
-                <p><strong>Estado:</strong> {{record.estado?.descripcion}}</p>
-                <p><strong>Fecha Registro:</strong> {{record.fechaRegistro | date:'dd/MM/yyyy'}}</p>
-            </div>
-            <div class="col-md-6">
-                <h4>Datos de Envío</h4>
-                <p><strong>N° Factura:</strong> {{record.numeroFactura || 'Sin factura'}}</p>
-                <p><strong>Guía Remisión:</strong> {{record.serieGuia}} - {{record.numeroGuia || 'Sin guía'}}</p>
-                <p><strong>Fecha Entrega:</strong> {{record.fechaEntrega | date:'dd/MM/yyyy'}}</p>
-            </div>
-        </div>
+  <h2 mat-dialog-title>Detalle del Pedido #{{record.codigo}}</h2>
+  <mat-dialog-content class="factura-content">
 
+    <div class="row mb-3">
+      <div class="col-12">
+        <h4>Información General</h4>
+      </div>
+
+      <div class="col-md-4">
+        <div class="info-block">
+          <div class="info-label">Proveedor:</div>
+          <div class="info-value">{{ record.proveedor?.razonSocial }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="info-block">
+          <div class="info-label">RUC:</div>
+          <div class="info-value">{{ record.proveedor?.ruc }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="info-block">
+          <div class="info-label">Estado:</div>
+          <div class="info-value">{{ record.estado?.descripcion }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="info-block">
+          <div class="info-label">Fecha de Registro:</div>
+          <div class="info-value">{{ convertirFecha(record.fechaRegistro) }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-12">
+        <h4>Datos de Envío</h4>
+      </div>
+
+      <div class="col-md-4">
+        <div class="info-block">
+          <div class="info-label">Descripción:</div>
+          <div class="info-value">{{ record.descripcion }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="info-block">
+          <div class="info-label">Número de Factura:</div>
+          <div class="info-value">{{ record.numeroFactura }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="info-block">
+          <div class="info-label">Guía de Remisión:</div>
+          <div class="info-value">{{ record.serieGuia }} - {{ record.numeroGuia || 'Sin guía' }}</div>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="info-block">
+          <div class="info-label">Fecha de Entrega:</div>
+          <div class="info-value">{{ convertirFecha(record.fechaEntrega) }}</div>
+        </div>
+      </div>
+
+      <div class="col-12 mt-4">
         <h4>Productos</h4>
-        <table class="table table-bordered table-hover">
+        <div class="tabla-container">
+          <table class="tabla-pedidos">
             <thead>
-                <tr>
-                    <th width="15%">Código</th>
-                    <th width="30%">Producto</th>
-                    <th width="15%">Cantidad</th>
-                    <th width="20%">P. Unitario</th>
-                    <th width="20%">Subtotal</th>
-                </tr>
+              <tr>
+                <th>Código</th>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Precio Total</th>
+              </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let producto of record.pedidoProducto">
-                    <td>{{producto.producto?.id}}</td>
-                    <td>{{producto.producto?.nombre || 'N/A'}}</td>
-                    <td>{{producto.cantidad || 0}}</td>
-                    <td>S/ {{(producto.producto?.precioUnitario)}}</td>
-                    <td>S/ {{calcularSubTotal(producto)}}</td>
-                </tr>
+              <tr *ngFor="let row of record.pedidoProducto">
+                <td>{{ row.id }}</td>
+                <td>{{ row.producto?.nombre }}</td>
+                <td>{{ row.cantidad }}</td>
+                <td>{{ row.monto }}</td>
+                <td>{{ calcularMontoTotalPorProducto(row.cantidad,row.monto) }}</td>
+              </tr>
             </tbody>
             <tfoot>
-                <tr>
-                    <th colspan="4" class="text-end">Total Calculado:</th>
-                    <th [class.text-success]="validarTotal(record).coincide"
-                        [class.text-warning]="!validarTotal(record).coincide">
-                        S/ {{ validarTotal(record).totalCalculado | number:'1.2-2' }}
-                    </th>
-                </tr>
-                
-                <tr *ngIf="!validarTotal(record).coincide && record.montoTotal">
-                    <th colspan="4" class="text-end">Total Proveedor:</th>
-                    <th class="text-danger">
-                        S/ {{ validarTotal(record).totalBackend | number:'1.2-2' }}
-                        <span class="badge bg-light text-dark ms-2">
-                            Diferencia: {{ validarTotal(record).diferencia | number:'1.2-2' }}
-                        </span>
-                    </th>
-                </tr>
-                
-                <tr *ngIf="!validarTotal(record).coincide">
-                    <td colspan="5" class="text-end small" 
-                        [class.text-warning]="!validarTotal(record).coincide">
-                        <i class="fas fa-exclamation-triangle me-1"></i>
-                        Los totales no coinciden. Verifique los cálculos.
-                    </td>
-                </tr>
-            </tfoot>        
-        </table>    
+              <tr class="fila-subtotal">
+                <td colspan="4" class="text-end"><strong>Subtotal</strong></td>
+                <td>S/ {{ calcularSubTotal() | number: '1.2-2' }}</td>
+              </tr>
+              <tr class="fila-total">
+                <td colspan="4" class="text-end"><strong>Total (incluye IGV)</strong></td>
+                <td>S/ {{ calcularTotal() | number:'1.2-2' }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
 
-        <mat-form-field appearance="fill" class="w-100">
-            <mat-label>Observación de Envío</mat-label>
-            <textarea matInput rows="3" [(ngModel)]="observacionEnvio" maxlength="500" (input)="RG.text($event)"></textarea>
-        </mat-form-field>
+      <div class="col-md-12 mb-3">
+        <div class="info-block">
+          <div class="info-label">OBSERVACIÓN DE ENVÍO:</div>
+          <div class="info-value">{{ record.observacionEnvio }}</div>
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
 
-    </mat-dialog-content>
-
-    <mat-dialog-actions align="end">
-        <button mat-button (click)="dialogRef.close()">Cancelar</button>
-    </mat-dialog-actions>
-
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="dialogRef.close()">Cancelar</button>
+  </mat-dialog-actions>
 </ng-template>

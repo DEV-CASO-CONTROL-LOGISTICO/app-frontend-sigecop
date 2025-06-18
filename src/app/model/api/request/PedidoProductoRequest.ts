@@ -5,5 +5,6 @@ export class PedidoProductoRequest extends ClassGeneric {
     pedidoId?: number;
     productoId?: number;
     cantidad?: number;
+    monto?: number;
     productoNombre?: String;
 }

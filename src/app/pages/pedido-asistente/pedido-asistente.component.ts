@@ -4,7 +4,7 @@ import { forkJoin } from 'rxjs';
 import Swal from 'sweetalert2';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { CommonModule } from '@angular/common';
-import { setListRow } from '../../util/methods';
+import { calcularTotal, convertirIsoADDMMAAAA, setListRow } from '../../util/methods';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,7 +19,7 @@ import { RegexConstants } from '../../util/constant';
 import { PedidoRequest } from '../../model/api/request/PedidoRequest';
 import { PedidoService } from '../../service/gestion/pedido.service';
 import { EstadoPedidoService } from '../../service/gestion/estadoPedido.service';
-import { PedidoProductoResponse } from '../../model/api/response/PedidoProductoResponse';
+import { PedidoProductoRequest } from '../../model/api/request/PedidoProductoRequest';
 
 
 
@@ -94,11 +94,7 @@ export class PedidoAsistenteComponent implements OnInit {
             resultResponse: this.service.list(this.filter)
         }).subscribe({
             next: ({ resultResponse }) => {
-                this.result = [...setListRow(resultResponse)].filter(pedido => 
-                    pedido.estado?.descripcion !== 'GENERADO' && 
-                    pedido.estado?.descripcion !== 'DEVUELTO' &&
-                    pedido.estado?.descripcion !== 'CON CONFORMIDAD'
-                );
+                this.result = [...setListRow(resultResponse)];
                 this.initTable();
             },
             error: (err) => {
@@ -112,72 +108,77 @@ export class PedidoAsistenteComponent implements OnInit {
         });
     }
 
+    convertirFecha(fecha: any): any {
+        return convertirIsoADDMMAAAA(fecha);
+    }
+
+    calcularMontoTotalPorProducto(cantidad: number | null | undefined, precioUnitario: number | null | undefined): number | null {
+        return calcularTotal(cantidad, precioUnitario);
+    }
+
     openDetallePedido(pedido: PedidoResponse) {
         this.record = {} as PedidoResponse;
         this.observacionEnvio = pedido.observacionEnvio || '';
-
+        
         forkJoin({
             resultResponse: this.service.find({ id: pedido.id })
         }).subscribe({
             next: ({ resultResponse }) => {
                 this.record = {
                     ...resultResponse,
-                    pedidoProducto: (resultResponse.pedidoProducto ?? []).map(pp => ({
+                    pedidoProducto: (resultResponse.pedidoProducto ?? []).map((pp, index) => ({
+                        row: index + 1,
                         id: pp.id,
-                        cantidad: pp.cantidad,                        
                         producto: {
                             id: pp.producto?.id,
                             nombre: pp.producto?.nombre,
-                            codigo: pp.producto?.id,
                             precioUnitario: pp.producto?.precioUnitario
-                        }
+                        },
+                        cantidad: pp.cantidad,
+                        monto: pp.monto
                     }))
                 };
                 
                 this.observacionEnvio = resultResponse.observacionEnvio || '';
             },
             error: (err) => {
-                Swal.fire('Error', 'No se pudo cargar el detalle del pedido', 'error');
+                Swal.close();
+                Swal.fire({
+                    icon: 'warning',
+                    title: '¡Advertencia!',
+                    text: err.error,
+                });
             }
         });
 
-        this.dialogRef = this.dialog.open(this.detallePedidoTemplate, {
-            width: '800px'
-        });
+        this.dialogRef = this.dialog.open(this.detallePedidoTemplate, { width: '800px'});
     }
 
-    calcularSubTotal(producto: PedidoProductoResponse): number {
-        const cantidad = producto.cantidad ?? 0;
-        const precio = producto.producto?.precioUnitario ?? 0;
-        return (cantidad * precio);
+    validarCantidad(event: any) {
+        const input = event.target;
+        const valor = input.value;
+
+        const regex = /^\d{0,4}(\.\d{0,2})?$/;
+
+        if (!regex.test(valor)) {
+            const limpio = valor.match(/^\d{0,4}(\.\d{0,2})?/);
+            input.value = limpio ? limpio[0] : '';
+            input.dispatchEvent(new Event('input'));
+        }
     }
 
-    calcularTotal(pedido: PedidoResponse): number {
-        if (!pedido.pedidoProducto?.length) return 0;
-        
-        return pedido.pedidoProducto.reduce((total, producto) => {
-            return total + this.calcularSubTotal(producto);
-        }, 0);
+    calcularSubTotal(): number {
+        const total = this.calcularTotal();
+        return parseFloat((total / 1.18).toFixed(2));
     }
 
-    validarTotal(pedido: PedidoResponse): { 
-        totalCalculado: number; 
-        totalBackend: number; 
-        coincide: boolean; 
-        diferencia: number 
-    } {
-        const totalCalculado = this.calcularTotal(pedido);
-        const totalBackend = pedido.montoTotal || 0;
-        
-        const diferencia = Math.abs(totalCalculado - totalBackend);
-        const coincide = diferencia < 0.01;
-        
-        return {
-            totalCalculado,
-            totalBackend,
-            coincide,
-            diferencia
-        };
+    calcularTotal(): number {
+        return (this.record?.pedidoProducto ?? [])
+            .reduce((total, row: PedidoProductoRequest) => {
+                const cantidad = parseFloat(row.cantidad + '') || 0;
+                const precio = parseFloat(row.monto + '') || 0;
+                return total + cantidad * precio;
+            }, 0);
     }
 
     private initTable() {
