@@ -1,0 +1,183 @@
+/* Copia de los estilos de pedido-asistente para pedido-proveedor */
+.pedido-container {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+}
+
+.pedido-container h1 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.pedido-container hr {
+    border-top: 2px solid #3498db;
+    opacity: 0.3;
+    margin-top: 0;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+}
+
+.table thead th {
+    background-color: #3498db;
+    color: white;
+    padding: 12px;
+    text-align: left;
+    font-weight: 500;
+}
+
+.table tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #e0e0e0;
+    vertical-align: middle;
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.table tbody tr:hover {
+    background-color: #f1f7fd;
+}
+
+.table tfoot th {
+    padding: 12px;
+    background-color: #f8f9fa;
+    font-weight: 500;
+}
+
+.btn {
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 14px;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+}
+
+.mat-dialog-container {
+    border-radius: 8px !important;
+    padding: 24px !important;
+}
+
+.mat-dialog-title {
+    color: #2c3e50;
+    font-weight: 600;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.mat-dialog-content {
+    max-height: 70vh !important;
+    padding: 0 10px !important;
+}
+
+.info-section {
+    margin-bottom: 20px;
+}
+
+.info-section h4 {
+    color: #3498db;
+    font-weight: 500;
+    margin-bottom: 15px;
+    border-bottom: 1px dashed #e0e0e0;
+    padding-bottom: 8px;
+}
+
+.info-section p {
+    margin-bottom: 8px;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.text-success {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.text-warning {
+    color: #ffc107;
+    font-weight: 500;
+}
+
+.text-danger {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+.fas {
+    margin-right: 5px;
+}
+
+.warning-message {
+    background-color: #fff3cd;
+    padding: 10px;
+    border-radius: 4px;
+    border-left: 4px solid #ffc107;
+    margin-top: 10px;
+}
+
+.mat-form-field {
+    width: 100%;
+}
+
+.mat-form-field-appearance-fill .mat-form-field-flex {
+    background-color: rgba(0, 0, 0, 0.04);
+    border-radius: 4px !important;
+}
+
+@media (max-width: 768px) {
+    .info-section {
+        margin-bottom: 15px;
+    }
+    
+    .table thead {
+        display: none;
+    }
+    
+    .table tbody td {
+        display: block;
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+    }
+    
+    .table tbody td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 12px;
+        width: 45%;
+        padding-right: 10px;
+        text-align: left;
+        font-weight: bold;
+    }
+}

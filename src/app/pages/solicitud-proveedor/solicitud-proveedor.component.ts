@@ -105,6 +105,7 @@ export class SolicitudProveedorComponent {
     }
 
     search() {
+        console.log('Buscando solicitudes con los siguientes filtros:', this.filter),
         forkJoin({
             resultResponse: this.service.findByProveedor({
                 estadoId: this.filter.estadoId,

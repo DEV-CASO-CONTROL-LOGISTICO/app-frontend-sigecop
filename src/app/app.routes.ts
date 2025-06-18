@@ -15,6 +15,7 @@ import { UnauthorizedComponent } from './pages/unauthorized/unauthorized.compone
 import { hasRoleGuard } from './core/guards/has-role.guard';
 import { UnfoundComponent } from './pages/unfound/unfound.component';
 import { PedidoAsistenteComponent } from './pages/pedido-asistente/pedido-asistente.component';
+import { PedidoProveedorComponent } from './pages/pedido-proveedor/pedido-proveedor.component';
 
 export const routes: Routes = [
     { path: 'login', component: LoginComponent },
@@ -32,6 +33,7 @@ export const routes: Routes = [
             { path: 'Rol', component: RolComponent, canActivate: [hasRoleGuard] },
             { path: 'SolicitudProveedor', component: SolicitudProveedorComponent, canActivate: [hasRoleGuard] },
             { path: 'GestionPedidos', component: PedidoAsistenteComponent, canActivate: [hasRoleGuard] },
+            { path: 'PedidosProveedor', component: PedidoProveedorComponent, canActivate: [hasRoleGuard] },
             { path: 'SinAutorizacion', component: UnauthorizedComponent },
             { path: 'NoEncontrado', component: UnfoundComponent }
         ]
