@@ -185,3 +185,16 @@
 .file-input {
     display: none;
 }
+
+.fila-subtotal td {
+    background-color: #f5f5f5;
+    font-weight: 500;
+    border-top: 2px solid #ccc;
+}
+
+.fila-total td {
+    background-color: #e0f7fa;
+    font-weight: bold;
+    border-top: 2px solid #00796b;
+    color: #004d40;
+}

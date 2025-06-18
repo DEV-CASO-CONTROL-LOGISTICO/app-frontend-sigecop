@@ -46,10 +46,11 @@
 <ngx-datatable class="bootstrap" [rows]="result" [columns]="columns" [limit]="5" [columnMode]="'force'"
     [headerHeight]="50" [footerHeight]="50" [rowHeight]="'auto'">    
     <ng-template #colAccionTemplate let-row="row">
-        <button class="btn btn-info btn-sm" (click)="openDetallePedido(row)">
+        <button class="btn btn-info btn-sm" (click)="openDetallePedido(row)" *ngIf="!row.esGenerado"
+                title="Ver Detalle">
             <i class="fas fa-eye"></i>
         </button>
-        <button class="btn btn-primary" style="margin-left: 5px;" (click)="openEnviarPedido(row)" title="Enviar">
+        <button class="btn btn-primary" style="margin-left: 5px;" (click)="openEnviarPedido(row)" title="Enviar" *ngIf="row.esDevuelto || row.esGenerado">
                 <i class="fas fa-pencil"></i>
         </button>
     </ng-template>
@@ -90,37 +91,20 @@
                     <td>{{producto.producto?.id}}</td>
                     <td>{{producto.producto?.nombre || 'N/A'}}</td>
                     <td>{{producto.cantidad || 0}}</td>
-                    <td>S/ {{(producto.producto?.precioUnitario)}}</td>
-                    <td>S/ {{calcularSubTotal(producto)}}</td>
+                    <td>S/ {{(producto.producto?.precioUnitario) | number: '1.2-2'}}</td>
+                    <td>S/ {{calcularSubTotal(producto) | number: '1.2-2'}}</td>
                 </tr>
             </tbody>
             <tfoot>
-                <tr>
-                    <th colspan="4" class="text-end">Total Calculado:</th>
-                    <th [class.text-success]="validarTotal(record).coincide"
-                        [class.text-warning]="!validarTotal(record).coincide">
-                        S/ {{ validarTotal(record).totalCalculado | number:'1.2-2' }}
-                    </th>
-                </tr>
-                
-                <tr *ngIf="!validarTotal(record).coincide && record.montoTotal">
-                    <th colspan="4" class="text-end">Total Proveedor:</th>
-                    <th class="text-danger">
-                        S/ {{ validarTotal(record).totalBackend | number:'1.2-2' }}
-                        <span class="badge bg-light text-dark ms-2">
-                            Diferencia: {{ validarTotal(record).diferencia | number:'1.2-2' }}
-                        </span>
-                    </th>
-                </tr>
-                
-                <tr *ngIf="!validarTotal(record).coincide">
-                    <td colspan="5" class="text-end small" 
-                        [class.text-warning]="!validarTotal(record).coincide">
-                        <i class="fas fa-exclamation-triangle me-1"></i>
-                        Los totales no coinciden. Verifique los cálculos.
-                    </td>
-                </tr>
-            </tfoot>        
+              <tr class="fila-subtotal">
+                <td colspan="4" class="text-end"><strong>Subtotal</strong></td>
+                <td>S/ {{ calcularSubTotalRegistrado() | number: '1.2-2' }}</td>
+              </tr>
+              <tr class="fila-total">
+                <td colspan="4" class="text-end"><strong>Total (incluye IGV)</strong></td>
+                <td>S/ {{ calcularTotalRegistrado() | number:'1.2-2' }}</td>
+              </tr>
+            </tfoot>       
         </table>    
 
         <mat-form-field appearance="fill" class="w-100" disabled>
@@ -169,36 +153,19 @@
                     <td>{{producto.producto?.id}}</td>
                     <td>{{producto.producto?.nombre || 'N/A'}}</td>
                     <td>{{producto.cantidad || 0}}</td>
-                    <td>S/ {{(producto.producto?.precioUnitario)}}</td>
-                    <td>S/ {{calcularSubTotal(producto)}}</td>
+                    <td>S/ {{(producto.producto?.precioUnitario) | number: '1.2-2'}}</td>
+                    <td>S/ {{calcularSubTotal(producto) | number: '1.2-2'}}</td>
                 </tr>
             </tbody>
             <tfoot>
-                <tr>
-                    <th colspan="4" class="text-end">Total Calculado:</th>
-                    <th [class.text-success]="validarTotal(record).coincide"
-                        [class.text-warning]="!validarTotal(record).coincide">
-                        S/ {{ validarTotal(record).totalCalculado | number:'1.2-2' }}
-                    </th>
-                </tr>
-                
-                <tr *ngIf="!validarTotal(record).coincide && record.montoTotal">
-                    <th colspan="4" class="text-end">Total Proveedor:</th>
-                    <th class="text-danger">
-                        S/ {{ validarTotal(record).totalBackend | number:'1.2-2' }}
-                        <span class="badge bg-light text-dark ms-2">
-                            Diferencia: {{ validarTotal(record).diferencia | number:'1.2-2' }}
-                        </span>
-                    </th>
-                </tr>
-                
-                <tr *ngIf="!validarTotal(record).coincide">
-                    <td colspan="5" class="text-end small" 
-                        [class.text-warning]="!validarTotal(record).coincide">
-                        <i class="fas fa-exclamation-triangle me-1"></i>
-                        Los totales no coinciden. Verifique los cálculos.
-                    </td>
-                </tr>
+              <tr class="fila-subtotal">
+                <td colspan="4" class="text-end"><strong>Subtotal</strong></td>
+                <td>S/ {{ calcularSubTotalRegistrado() | number: '1.2-2' }}</td>
+              </tr>
+              <tr class="fila-total">
+                <td colspan="4" class="text-end"><strong>Total (incluye IGV)</strong></td>
+                <td>S/ {{ calcularTotalRegistrado() | number:'1.2-2' }}</td>
+              </tr>
             </tfoot>        
         </table>    
         

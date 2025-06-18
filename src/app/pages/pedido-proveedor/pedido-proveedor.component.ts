@@ -119,6 +119,7 @@ export class PedidoProveedorComponent implements OnInit {
     }
 
     openDetallePedido(pedido: PedidoResponse) {
+        console.log('openDetallePedido', pedido);
         this.record = {} as PedidoResponse;
         this.observacionEnvio = pedido.observacionEnvio || '';
 
@@ -286,5 +287,14 @@ export class PedidoProveedorComponent implements OnInit {
                 });
             }
         });
+    }
+
+    calcularTotalRegistrado(): number {
+      return this.record?.montoTotal || 0;
+    }
+    
+    calcularSubTotalRegistrado(): number {
+        const total = this.calcularTotalRegistrado();
+        return parseFloat((total / 1.18).toFixed(2));
     }
 }
