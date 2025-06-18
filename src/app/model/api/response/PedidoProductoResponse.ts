@@ -8,4 +8,5 @@ export class PedidoProductoResponse extends ClassGeneric {
     pedido?: PedidoResponse;
     producto?: ProductoResponse;
     cantidad?: number;
+    monto?: number;
 }
