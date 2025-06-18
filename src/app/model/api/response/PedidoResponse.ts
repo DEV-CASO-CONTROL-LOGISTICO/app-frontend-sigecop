@@ -21,7 +21,12 @@ export class PedidoResponse extends ClassGeneric {
     serieGuia?: string;
     numeroGuia?: string;
     fechaEntrega?: Date;
-    observacionEnvio?: string;        
+    observacionEnvio?: string;       
+    esConforme?: Boolean;         
+    esDevuelto?: Boolean;         
+    esEnviado?: Boolean;         
+    esGenerado?: Boolean;         
+    esPagado?: Boolean;        
     pedidoProducto?: PedidoProductoResponse[] = [];
     
 }
