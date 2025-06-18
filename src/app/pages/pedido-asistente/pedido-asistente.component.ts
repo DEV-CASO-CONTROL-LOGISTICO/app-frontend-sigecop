@@ -229,7 +229,9 @@ export class PedidoAsistenteComponent implements OnInit {
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                this.service.devolver({ id: this.record.id }).subscribe({
+                this.service.devolver(
+                    { id: this.record.id, observacionEnvio: this.record.observacionEnvio }
+                ).subscribe({
                     next: () => {
                         this.search();
                         Swal.close();
