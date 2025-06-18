@@ -134,15 +134,15 @@
           <div class="info-label">Fecha de Entrega:</div>
           <div class="info-value">{{ convertirFecha(record.fechaEntrega) }}</div>
         </div>
-      </div>
+      </div>      
+    </div>
 
       <div class="col-md-12 mb-3" *ngIf="record.esDevuelto">
         <div class="info-block">
           <div class="info-label">OBSERVACIÓN DE ENVÍO:</div>
-          <div class="info-value">{{ record.observacionEnvio }}</div>
+          <div class="info-value" style="color: red; font-weight: bold">{{ record.observacionEnvio }}</div>
         </div>
       </div>
-    </div>
 
       <div class="col-12 mt-4">
         <h4>Productos</h4>
