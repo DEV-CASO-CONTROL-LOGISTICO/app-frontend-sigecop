@@ -88,11 +88,12 @@
             </thead>
             <tbody>
                 <tr *ngFor="let producto of record.pedidoProducto">
-                    <td>{{producto.producto?.id}}</td>
+                    <!--<td>{{producto.producto?.id}}</td>-->
+                    <td>{{ producto.id }}</td>
                     <td>{{producto.producto?.nombre || 'N/A'}}</td>
                     <td>{{producto.cantidad || 0}}</td>
-                    <td>S/ {{(producto.producto?.precioUnitario) | number: '1.2-2'}}</td>
-                    <td>S/ {{calcularSubTotal(producto) | number: '1.2-2'}}</td>
+                    <td>S/ {{producto.monto | number: '1.2-2'}}</td>
+                    <td>S/ {{calcularMontoTotalPorProducto(producto.cantidad, producto.monto) | number: '1.2-2'}}</td>
                 </tr>
             </tbody>
             <tfoot>
@@ -105,11 +106,22 @@
                 <td>S/ {{ calcularTotalRegistrado() | number:'1.2-2' }}</td>
               </tr>
             </tfoot>       
-        </table>    
-
+        </table>   
+        <div class="row mb-3">
+            <div class="col-md-6 mb-2">
+                <button mat-stroked-button color="primary" (click)="descargarFactura()" style="margin-bottom: 8px; width: 100%;">
+                    <mat-icon>download</mat-icon> Descargar Factura
+                </button>
+            </div>
+            <div class="col-md-6 mb-2">
+                <button mat-stroked-button color="primary" (click)="descargarGuia()" style="margin-bottom: 8px; width: 100%;">
+                    <mat-icon>download</mat-icon> Descargar Guía
+                </button>
+            </div>
+        </div> 
         <mat-form-field appearance="fill" class="w-100" disabled>
             <mat-label>Observación de Envío</mat-label>
-            <textarea matInput rows="3" [(ngModel)]="observacionEnvio" maxlength="500" (input)="RG.text($event)"></textarea>
+            <textarea matInput rows="3" [(ngModel)]="observacionEnvio" maxlength="500" (input)="RG.text($event)" disabled></textarea>
         </mat-form-field>
 
     </mat-dialog-content>
@@ -153,8 +165,8 @@
                     <td>{{producto.producto?.id}}</td>
                     <td>{{producto.producto?.nombre || 'N/A'}}</td>
                     <td>{{producto.cantidad || 0}}</td>
-                    <td>S/ {{(producto.producto?.precioUnitario) | number: '1.2-2'}}</td>
-                    <td>S/ {{calcularSubTotal(producto) | number: '1.2-2'}}</td>
+                    <td>S/ {{producto.monto | number: '1.2-2'}}</td>
+                    <td>S/ {{calcularMontoTotalPorProducto(producto.cantidad, producto.monto) | number: '1.2-2'}}</td>
                 </tr>
             </tbody>
             <tfoot>
@@ -237,7 +249,16 @@
                 </mat-form-field>
             </div>
             
-            
+            <div class="col-md-6 mb-2">
+                <button mat-stroked-button color="primary" (click)="descargarFactura()" style="margin-bottom: 8px; width: 100%;">
+                    <mat-icon>download</mat-icon> Descargar Factura
+                </button>
+            </div>
+            <div class="col-md-6 mb-2">
+                <button mat-stroked-button color="primary" (click)="descargarGuia()" style="margin-bottom: 8px; width: 100%;">
+                    <mat-icon>download</mat-icon> Descargar Guía
+                </button>
+            </div>
         </div>
         <!--
         <mat-form-field appearance="fill" class="w-100">

@@ -54,4 +54,12 @@ export class PedidoService {
         return this.http.post<any>(`${BASE_URL}/pedido/uploadGuia`, formData);
     }
 
+    descargarArchivoFactura(filter: PedidoRequest): Observable<Blob> {
+        return this.http.post(`${BASE_URL}/pedido/downloadFactura`, filter,{ responseType: 'blob' });
+    }
+
+    descargarArchivoGuia(filter: PedidoRequest): Observable<Blob> {
+        return this.http.post(`${BASE_URL}/pedido/downloadGuia`, filter,{ responseType: 'blob' });
+    }
+
 }

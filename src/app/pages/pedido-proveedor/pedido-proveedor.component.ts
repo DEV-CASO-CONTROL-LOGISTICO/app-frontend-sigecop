@@ -4,7 +4,6 @@ import { forkJoin } from 'rxjs';
 import Swal from 'sweetalert2';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { CommonModule } from '@angular/common';
-import { setListRow } from '../../util/methods';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -21,7 +20,8 @@ import { PedidoRequest } from '../../model/api/request/PedidoRequest';
 import { PedidoService } from '../../service/gestion/pedido.service';
 import { EstadoPedidoService } from '../../service/gestion/estadoPedido.service';
 import { PedidoProductoResponse } from '../../model/api/response/PedidoProductoResponse';
-
+import { PedidoProductoRequest } from '../../model/api/request/PedidoProductoRequest';
+import { calcularTotal, convertirIsoADDMMAAAA, handleError, setListRow } from '../../util/methods';
 @Component({
     selector: 'app-pedido-proveedor',
     standalone: true,
@@ -129,7 +129,8 @@ export class PedidoProveedorComponent implements OnInit {
             next: ({ resultResponse }) => {
                 this.record = {
                     ...resultResponse,
-                    pedidoProducto: (resultResponse.pedidoProducto ?? []).map(pp => ({
+                    pedidoProducto: (resultResponse.pedidoProducto ?? []).map((pp, index) => ({
+                        row: index + 1,
                         id: pp.id,
                         cantidad: pp.cantidad,                        
                         producto: {
@@ -137,7 +138,8 @@ export class PedidoProveedorComponent implements OnInit {
                             nombre: pp.producto?.nombre,
                             codigo: pp.producto?.id,
                             precioUnitario: pp.producto?.precioUnitario
-                        }
+                        },
+                        monto: pp.monto
                     }))
                 };
                 
@@ -149,7 +151,8 @@ export class PedidoProveedorComponent implements OnInit {
         });
 
         this.dialogRef = this.dialog.open(this.detallePedidoTemplate, {
-            width: '800px'
+            width: '1000px',
+            maxWidth: 'none'
         });
     }
 
@@ -163,7 +166,8 @@ export class PedidoProveedorComponent implements OnInit {
             next: ({ resultResponse }) => {
                 this.record = {
                     ...resultResponse,
-                    pedidoProducto: (resultResponse.pedidoProducto ?? []).map(pp => ({
+                    pedidoProducto: (resultResponse.pedidoProducto ?? []).map((pp, index) => ({
+                        row: index + 1,
                         id: pp.id,
                         cantidad: pp.cantidad,                        
                         producto: {
@@ -171,7 +175,8 @@ export class PedidoProveedorComponent implements OnInit {
                             nombre: pp.producto?.nombre,
                             codigo: pp.producto?.id,
                             precioUnitario: pp.producto?.precioUnitario
-                        }
+                        },
+                        monto: pp.monto
                     }))
                 };
                 
@@ -188,38 +193,22 @@ export class PedidoProveedorComponent implements OnInit {
         });
     }
 
-    calcularSubTotal(producto: PedidoProductoResponse): number {
-        const cantidad = producto.cantidad ?? 0;
-        const precio = producto.producto?.precioUnitario ?? 0;
-        return (cantidad * precio);
+    calcularSubTotal(): number {
+            const total = this.calcularTotal();
+            return parseFloat((total / 1.18).toFixed(2));
+        }
+    
+    calcularTotal(): number {
+        return (this.record?.pedidoProducto ?? [])
+            .reduce((total, row: PedidoProductoRequest) => {
+                const cantidad = parseFloat(row.cantidad + '') || 0;
+                const precio = parseFloat(row.monto + '') || 0;
+                return total + cantidad * precio;
+            }, 0);
     }
 
-    calcularTotal(pedido: PedidoResponse): number {
-        if (!pedido.pedidoProducto?.length) return 0;
-        
-        return pedido.pedidoProducto.reduce((total, producto) => {
-            return total + this.calcularSubTotal(producto);
-        }, 0);
-    }
-
-    validarTotal(pedido: PedidoResponse): { 
-        totalCalculado: number; 
-        totalBackend: number; 
-        coincide: boolean; 
-        diferencia: number 
-    } {
-        const totalCalculado = this.calcularTotal(pedido);
-        const totalBackend = pedido.montoTotal || 0;
-        
-        const diferencia = Math.abs(totalCalculado - totalBackend);
-        const coincide = diferencia < 0.01;
-        
-        return {
-            totalCalculado,
-            totalBackend,
-            coincide,
-            diferencia
-        };
+    calcularMontoTotalPorProducto(cantidad: number | null | undefined, precioUnitario: number | null | undefined): number | null {
+            return calcularTotal(cantidad, precioUnitario);
     }
 
     onFacturaFileChange(event: any) {
@@ -302,6 +291,62 @@ export class PedidoProveedorComponent implements OnInit {
                     icon: 'error',
                     title: 'Error',
                     text: err.error || 'No se pudo enviar el archivo de guía.'
+                });
+            }
+        });
+    }
+
+    descargarFactura() {
+        if (!this.record.id) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'ID faltante',
+                text: 'No se puede descargar la factura sin un pedido válido.',
+            });
+            return;
+        }
+        this.service.descargarArchivoFactura({ id: this.record.id }).subscribe({
+            next: (blob: Blob) => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `factura_${this.record.id}.pdf`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            },
+            error: (err: any) => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.error || 'No se pudo descargar el archivo de factura.'
+                });
+            }
+        });
+    }
+
+    descargarGuia() {
+        if (!this.record.id) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'ID faltante',
+                text: 'No se puede descargar la guía sin un pedido válido.',
+            });
+            return;
+        }
+        this.service.descargarArchivoGuia({ id: this.record.id }).subscribe({
+            next: (blob: Blob) => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `guia_${this.record.id}.pdf`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            },
+            error: (err: any) => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err.error || 'No se pudo descargar el archivo de guía.'
                 });
             }
         });
