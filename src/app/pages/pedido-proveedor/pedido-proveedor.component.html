@@ -119,7 +119,7 @@
                 </button>
             </div>
         </div> 
-        <mat-form-field appearance="fill" class="w-100" disabled>
+        <mat-form-field appearance="fill" class="w-100" disabled *ngIf="record.esDevuelto">
             <mat-label>Observación de Envío</mat-label>
             <textarea matInput rows="3" [(ngModel)]="observacionEnvio" maxlength="500" (input)="RG.text($event)" disabled></textarea>
         </mat-form-field>
@@ -260,11 +260,11 @@
                 </button>
             </div>
         </div>
-        <!--
-        <mat-form-field appearance="fill" class="w-100">
+        
+        <mat-form-field appearance="fill" class="w-100" *ngIf="record.esDevuelto">
             <mat-label>Observación de Envío</mat-label>
-            <textarea matInput rows="3" [(ngModel)]="observacionEnvio" maxlength="500" (input)="RG.text($event)"></textarea>
-        </mat-form-field>-->
+            <textarea matInput rows="3" [(ngModel)]="observacionEnvio" maxlength="500" (input)="RG.text($event)" disabled></textarea>
+        </mat-form-field>
 
     </mat-dialog-content>
 

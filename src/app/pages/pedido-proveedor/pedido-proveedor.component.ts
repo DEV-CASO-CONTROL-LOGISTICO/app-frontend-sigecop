@@ -125,7 +125,10 @@ export class PedidoProveedorComponent implements OnInit {
 
         forkJoin({
             resultResponse: this.service.find({ id: pedido.id })
+            //resultResponseFactura: this.service.descargarArchivoFactura({ id: pedido.id }),
+            //resultResponseGuia: this.service.descargarArchivoGuia({ id: pedido.id })    
         }).subscribe({
+            //next: ({ resultResponse, resultResponseFactura, resultResponseGuia }) => {
             next: ({ resultResponse }) => {
                 this.record = {
                     ...resultResponse,
@@ -144,6 +147,7 @@ export class PedidoProveedorComponent implements OnInit {
                 };
                 
                 this.observacionEnvio = resultResponse.observacionEnvio || '';
+                
             },
             error: (err) => {
                 Swal.fire('Error', 'No se pudo cargar el detalle del pedido', 'error');
@@ -335,6 +339,7 @@ export class PedidoProveedorComponent implements OnInit {
         }
         this.service.descargarArchivoGuia({ id: this.record.id }).subscribe({
             next: (blob: Blob) => {
+                console.log('Descargando guía', blob);
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
