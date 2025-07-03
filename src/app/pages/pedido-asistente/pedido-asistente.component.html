@@ -137,14 +137,27 @@
       </div>      
     </div>
 
-      <div class="col-md-12 mb-3" *ngIf="record.esDevuelto">
-        <div class="info-block">
-          <div class="info-label">OBSERVACIÓN DE ENVÍO:</div>
-          <div class="info-value" style="color: red; font-weight: bold">{{ record.observacionEnvio }}</div>
-        </div>
+    <div class="col-md-12 mb-3" *ngIf="record.esDevuelto">
+      <div class="info-block">
+        <div class="info-label">OBSERVACIÓN DE ENVÍO:</div>
+        <div class="info-value" style="color: red; font-weight: bold">{{ record.observacionEnvio }}</div>
       </div>
+    </div>
 
-      <div class="col-12 mt-4">
+    <div class="row mb-3">
+          <div class="col-md-6 mb-2">
+            <button mat-stroked-button color="primary" (click)="verFactura(record.id!)" style="margin-bottom: 8px; width: 100%;">
+                <mat-icon>visibility</mat-icon> Ver Factura
+            </button>
+          </div>
+          <div class="col-md-6 mb-2">
+            <button mat-stroked-button color="primary" (click)="verGuia(record.id!)" style="margin-bottom: 8px; width: 100%;">
+                <mat-icon>visibility</mat-icon> Ver Guía
+            </button>
+          </div>
+    </div>       
+
+    <div class="col-12 mt-4">
         <h4>Productos</h4>
         <div class="tabla-container">
           <table class="tabla-pedidos">
@@ -178,7 +191,7 @@
             </tfoot>
           </table>
         </div>
-      </div>
+    </div>
       
   </mat-dialog-content>
 

@@ -37,15 +37,19 @@ export class PedidoService {
     enviarPedido(filter: PedidoRequest): Observable<PedidoResponse> {
         return this.http.post<PedidoResponse>(`${BASE_URL}/pedido/enviar`, filter);
     }
+
     findByProveedor(filter: PedidoRequest): Observable<PedidoResponse[]> {
         return this.http.post<PedidoResponse[]>(`${BASE_URL}/pedido/pedidoProveedor`, filter);
     }
+
     darConformidad(filter: PedidoRequest): Observable<PedidoResponse> {
         return this.http.post<PedidoResponse>(`${BASE_URL}/pedido/darConformidad`, filter);
     }
+
     devolver(filter: PedidoRequest): Observable<PedidoResponse> {
         return this.http.post<PedidoResponse>(`${BASE_URL}/pedido/devolver`, filter);
     }
+
     enviarArchivoFactura(formData: FormData): Observable<any> {
         return this.http.post<any>(`${BASE_URL}/pedido/uploadFactura`, formData);
     }
@@ -53,13 +57,25 @@ export class PedidoService {
     enviarArchivoGuia(formData: FormData): Observable<any> {
         return this.http.post<any>(`${BASE_URL}/pedido/uploadGuia`, formData);
     }
-
+    
     descargarArchivoFactura(filter: PedidoRequest): Observable<Blob> {
         return this.http.post(`${BASE_URL}/pedido/downloadFactura`, filter,{ responseType: 'blob' });
     }
 
     descargarArchivoGuia(filter: PedidoRequest): Observable<Blob> {
         return this.http.post(`${BASE_URL}/pedido/downloadGuia`, filter,{ responseType: 'blob' });
+    }
+
+    verFactura(pedidoId: number): Observable<Blob> {
+        return this.http.get(`${BASE_URL}/pedido/obtenerFactura/${pedidoId}`, {
+        responseType: 'blob'
+        });
+    }
+
+    verGuia(pedidoId: number): Observable<Blob> {
+        return this.http.get(`${BASE_URL}/pedido/obtenerGuia/${pedidoId}`, {
+        responseType: 'blob'
+        });
     }
 
 }

@@ -11,6 +11,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatIconModule } from '@angular/material/icon';
 import { PedidoResponse } from '../../model/api/response/PedidoResponse';
 import { ProductoResponse } from '../../model/api/response/ProductoResponse';
 import { EstadoPedidoResponse } from '../../model/api/response/EstadoPedidoResponse';
@@ -20,8 +21,7 @@ import { PedidoRequest } from '../../model/api/request/PedidoRequest';
 import { PedidoService } from '../../service/gestion/pedido.service';
 import { EstadoPedidoService } from '../../service/gestion/estadoPedido.service';
 import { PedidoProductoRequest } from '../../model/api/request/PedidoProductoRequest';
-
-
+import { url } from 'node:inspector';
 
 @Component({
     selector: 'app-pedido',
@@ -35,7 +35,8 @@ import { PedidoProductoRequest } from '../../model/api/request/PedidoProductoReq
         MatButtonModule,
         MatSelectModule,
         MatDatepickerModule,
-        FormsModule
+        FormsModule,
+        MatIconModule
     ],
     templateUrl: './pedido-asistente.component.html',
     styleUrl: './pedido-asistente.component.css'
@@ -180,6 +181,28 @@ export class PedidoAsistenteComponent implements OnInit {
                 const precio = parseFloat(row.monto + '') || 0;
                 return total + cantidad * precio;
             }, 0);
+    }
+
+    verFactura(pedidoId: number) {
+        this.service.verFactura(pedidoId).subscribe(blob => {
+        const url = window.URL.createObjectURL(blob);
+        
+        window.open(url, '_blank');
+        window.URL.revokeObjectURL(url);
+        console.log('URL de la solicitud:', url);
+        }, error => {
+            Swal.fire('Error', 'No se pudo cargar la factura', 'error');
+        });        
+    }
+
+    verGuia(pedidoId: number) {
+        this.service.verGuia(pedidoId).subscribe(blob => {
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        window.URL.revokeObjectURL(url);
+        }, error => {
+            Swal.fire('Error', 'No se pudo cargar la guía', 'error');
+        });
     }
 
     darConformidad(item: PedidoResponse) {
