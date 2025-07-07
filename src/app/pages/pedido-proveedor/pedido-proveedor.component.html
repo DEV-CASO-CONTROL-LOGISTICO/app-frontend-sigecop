@@ -182,12 +182,12 @@
         </table>    
         
          <div class="row mb-3">
-            <div class="col-md-6 mb-2">
+            <!--<div class="col-md-6 mb-2">
                 <mat-form-field appearance="fill" class="w-100">
                     <mat-label>Número de Factura*</mat-label>
                     <input matInput [(ngModel)]="record.numeroFactura" maxlength="50">
                 </mat-form-field>
-            </div>
+            </div>-->
             <div class="col-md-6 mb-2">
                 <input type="file" class="file-input" (change)="onFacturaFileChange($event)" #fileUpload>
 
@@ -203,13 +203,13 @@
                     <mat-label>Archivo Factura (PDF)</mat-label>
                     <input type="file" accept="application/pdf" (change)="onFacturaFileChange($event)">
                 </mat-form-field>
-            </div>-->
+            </div>
             <div class="col-md-6 mb-2">
                 <mat-form-field appearance="fill" class="w-100">
                     <mat-label>Número de Guía*</mat-label>
                     <input matInput [(ngModel)]="record.numeroGuia" maxlength="50">
                 </mat-form-field>
-            </div>
+            </div>-->
             <!--<div class="col-md-6 mb-2">
                 <mat-form-field appearance="fill" class="w-100">
                     <mat-label>Archivo Guía (PDF)</mat-label>
@@ -226,12 +226,12 @@
                     {{archivoGuia || "Archivo no subido de la Guia"}}
                 </div>
             </div>
-            <div class="col-md-6 mb-2">
+            <!--<div class="col-md-6 mb-2">
                 <mat-form-field appearance="fill" class="w-100">
                     <mat-label>Serie de Guía*</mat-label>
                     <input matInput [(ngModel)]="record.serieGuia" maxlength="20">
                 </mat-form-field>
-            </div>
+            </div>-->
             <div class="col-md-6 mb-2">
                 <mat-form-field appearance="fill" class="w-100">
                     <mat-label>Fecha Emisión*</mat-label>
@@ -243,7 +243,7 @@
             <div class="col-md-6 mb-2">
                 <mat-form-field appearance="fill" class="w-100">
                     <mat-label>Fecha Estimada Entrega*</mat-label>
-                    <input matInput [matDatepicker]="pickerEntrega" [(ngModel)]="record.fechaEntrega" readonly>
+                    <input matInput [matDatepicker]="pickerEntrega" [(ngModel)]="record.fechaEntrega" [value]="record.fechaEntrega" readonly>
                     <mat-datepicker-toggle matSuffix [for]="pickerEntrega"></mat-datepicker-toggle>
                     <mat-datepicker #pickerEntrega></mat-datepicker>
                 </mat-form-field>

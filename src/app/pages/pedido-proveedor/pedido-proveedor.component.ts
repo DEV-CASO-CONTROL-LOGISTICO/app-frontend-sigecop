@@ -185,6 +185,7 @@ export class PedidoProveedorComponent implements OnInit {
                 };
                 
                 this.observacionEnvio = resultResponse.observacionEnvio || '';
+                this.record.fechaRegistro = new Date();
             },
             error: (err) => {
                 Swal.fire('Error', 'No se pudo cargar el detalle del pedido', 'error');
@@ -372,11 +373,11 @@ export class PedidoProveedorComponent implements OnInit {
 
     enviar(){
         // Validación de campos obligatorios
-        if (!this.record.numeroFactura || !this.record.numeroGuia || !this.record.serieGuia || !this.record.fechaRegistro || !this.record.fechaEntrega) {
+        if (!this.record.fechaRegistro || !this.record.fechaEntrega) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Campos obligatorios',
-                text: 'Debe completar todos los campos obligatorios: Número de Factura, Número de Guía, Serie de Guía, Fecha Emisión y Fecha Estimada Entrega.',
+                text: 'Debe completar todos los campos obligatorios:  Fecha Emisión y Fecha Estimada Entrega.',
             });
             return;
         }
@@ -391,7 +392,7 @@ export class PedidoProveedorComponent implements OnInit {
         const formDataFactura = new FormData();
         formDataFactura.append('file', this.facturaFile);
         formDataFactura.append('pedidoId', this.record.id.toString());
-        formDataFactura.append('numero', this.record.numeroFactura);
+        //formDataFactura.append('numero', this.record.numeroFactura);
 
          if (!this.guiaFile || !this.record.id) {
             Swal.fire({
@@ -404,7 +405,7 @@ export class PedidoProveedorComponent implements OnInit {
         const formDataGuia = new FormData();
         formDataGuia.append('file', this.guiaFile);
         formDataGuia.append('pedidoId', this.record.id.toString());
-        formDataGuia.append('numero', this.record.numeroGuia);
+        //formDataGuia.append('numero', this.record.numeroGuia);
 
         // Transformar record a filterEnvio
         this.filterEnvio = {
@@ -430,6 +431,7 @@ export class PedidoProveedorComponent implements OnInit {
                 });
                 this.dialogRef.close();
                 this.initTable();
+                this.search();
             },
             error: (err) => {
                 Swal.close();
