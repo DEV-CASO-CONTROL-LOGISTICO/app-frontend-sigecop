@@ -1,0 +1,220 @@
+<div class="mb-4">
+  <h1>Gestión de Obligaciones</h1>
+  <hr>
+</div>
+
+<div class="container mb-3">
+    <div class="row">
+        <div class="col-md-3 mb-3">
+            <mat-form-field appearance="fill" class="w-100">
+                <mat-label>Estado</mat-label>
+                <mat-select [(ngModel)]="filter.estadoId">
+                    <mat-option [value]="null">Todos</mat-option>
+                    <mat-option *ngFor="let est of listEstados" [value]="est.id">
+                        {{ est.descripcion }}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <mat-form-field appearance="fill" class="w-100">
+                <mat-label>Tipo</mat-label>
+                <mat-select [(ngModel)]="filter.tipoId">
+                    <mat-option [value]="null">Todos</mat-option>
+                    <mat-option *ngFor="let tip of listTipos" [value]="tip.id">
+                        {{ tip.nombre}}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <mat-form-field appearance="fill" class="w-100">
+                <mat-label>Buscar por Código</mat-label>
+                <input matInput [(ngModel)]="filter.codigo" (input)="RG.text($event)" maxlength="200">
+            </mat-form-field>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <mat-form-field appearance="fill" class="w-100">
+                <mat-label>Buscar por Descripción</mat-label>
+                <input matInput [(ngModel)]="filter.descripcion" (input)="RG.text($event)" maxlength="200">
+            </mat-form-field>
+        </div>
+
+        <div class="col-md-3 d-flex justify-content-start align-items-center mb-3">
+            <button class="btn btn-primary" (click)="search()" title="Buscar">
+                <i class="fas fa-search"></i>
+            </button>
+            <button class="btn btn-secondary" (click)="cleanSearch()" title="Limpiar" style="margin-left: 10px;">
+                <i class="fas fa-eraser"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!--Acciones-->
+<div class="d-flex justify-content-end mb-3">
+    <button class="btn btn-success" (click)="openAdd()" title="Nueva Obligación">
+        <i class="fas fa-plus"></i>
+    </button>
+</div>
+
+<ngx-datatable class="bootstrap" [rows]="result" [columns]="columns" [limit]="5" [columnMode]="'force'"
+    [headerHeight]="50" [footerHeight]="50" [rowHeight]="'auto'">
+
+    <ng-template #colAccionTemplate let-row="row">
+        <button class="btn btn-primary btn-sm" (click)="openDetalleObligacion(row)" title="Ver">
+            <i class="fas fa-eye"></i>
+        </button>
+        <button class="btn btn-warning btn-sm" style="margin-left: 5px;" (click)="openEdit(row)" title="Editar">
+            <i class="fas fa-edit"></i>
+        </button>
+        <button class="btn btn-danger btn-sm" style="margin-left: 5px;" (click)="delete(row)" title="Eliminar">
+            <i class="fas fa-trash"></i>
+        </button>
+    </ng-template>
+</ngx-datatable>
+
+<!-- Dialogo para Crear/Editar Obligación -->
+<ng-template #dialogTemplate>
+    <h2 mat-dialog-title>{{ record.id ? 'Editar' : 'Nueva' }} Obligación</h2>
+    <mat-dialog-content>
+        <form (ngSubmit)="save()">
+            <div class="row mb-3" *ngIf="record.id">
+                <div class="col-md-4">
+                    <div class="info-block">
+                        <div class="info-label">Código</div>
+                        <div class="info-value">{{ record.codigo }}</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-block">
+                        <div class="info-label">Fecha Registro</div>
+                        <div class="info-value">{{ convertirFecha(record.fechaRegistro) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <mat-form-field appearance="fill" class="w-100">
+                        <mat-label>Pedido</mat-label>
+                        <mat-select [(ngModel)]="record.pedidoId" name="pedidoId" required>
+                            <mat-option *ngFor="let ped of listPedidos" [value]="ped.id">
+                                {{ ped.codigo }} - {{ ped.proveedor?.razonSocial }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <mat-form-field appearance="fill" class="w-100">
+                        <mat-label>Estado</mat-label>
+                        <mat-select [(ngModel)]="record.estadoId" name="estadoId" required>
+                            <mat-option *ngFor="let est of listEstados" [value]="est.id">
+                                {{ est.descripcion }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <mat-form-field appearance="fill" class="w-100">
+                        <mat-label>Tipo</mat-label>
+                        <mat-select [(ngModel)]="record.tipoId" name="tipoId" required>
+                            <mat-option *ngFor="let tip of listTipos" [value]="tip.id">
+                                {{ tip.descripcion }}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <mat-form-field appearance="fill" class="w-100">
+                        <mat-label>Monto</mat-label>
+                        <input matInput [(ngModel)]="record.monto" name="monto" type="number" step="0.01" min="0" required>
+                    </mat-form-field>
+                </div>
+                
+                <div class="col-md-12 mb-3">
+                    <mat-form-field appearance="fill" class="w-100">
+                        <mat-label>Descripción</mat-label>
+                        <textarea matInput [(ngModel)]="record.descripcion" name="descripcion" required maxlength="500"></textarea>
+                    </mat-form-field>
+                </div>
+            </div>
+            
+            <mat-dialog-actions align="end">
+                <button mat-button type="button" (click)="dialogRef.close()">Cancelar</button>
+                <button mat-raised-button color="primary" type="submit">Guardar</button>
+            </mat-dialog-actions>
+        </form>
+    </mat-dialog-content>
+</ng-template>
+
+<!-- Dialogo para Detalle de Obligación -->
+<ng-template #detalleObligacionTemplate>
+    <h2 mat-dialog-title>Detalle de Obligación #{{obligacionSelected.codigo}}</h2>
+    <mat-dialog-content class="factura-content">
+        <div class="row mb-3">
+            <div class="col-12">
+                <h4>Información General</h4>
+            </div>
+
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Código:</div>
+                    <div class="info-value">{{ obligacionSelected.codigo }}</div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Estado:</div>
+                    <div class="info-value">{{ getEstadoDescripcion(obligacionSelected.estado?.id) }}</div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Tipo:</div>
+                    <div class="info-value">{{ getTipoDescripcion(obligacionSelected.tipo?.id) }}</div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Pedido:</div>
+                    <div class="info-value">{{ getPedidoDescripcion(obligacionSelected.pedido?.id) }}</div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Fecha de Registro:</div>
+                    <div class="info-value">{{ convertirFecha(obligacionSelected.fechaRegistro) }}</div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="info-block">
+                    <div class="info-label">Monto:</div>
+                    <div class="info-value">S/ {{ obligacionSelected.monto | number:'1.2-2' }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="info-block">
+                <div class="info-label">Descripción:</div>
+                <div class="info-value">{{ obligacionSelected.descripcion }}</div>
+            </div>
+        </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button mat-button (click)="dialogRef.close()">Cerrar</button>
+    </mat-dialog-actions>
+</ng-template>
