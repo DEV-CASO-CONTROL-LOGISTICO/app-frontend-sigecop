@@ -52,7 +52,6 @@ export class ObligacionComponent implements OnInit {
 
     listEstados: EstadoObligacionResponse[] = [];
     listTipos: TipoObligacionResponse[] = [];
-    listPedidos: PedidoResponse[] = [];
 
     @ViewChild('colAccionTemplate', { static: true }) colAccionTemplate!: TemplateRef<any>;
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate!: TemplateRef<any>;
@@ -64,7 +63,6 @@ export class ObligacionComponent implements OnInit {
         private service: ObligacionService,
         private estadoService: EstadoObligacionService,
         private tipoService: TipoObligacionService,
-        private pedidoService: PedidoService,
         private cdr: ChangeDetectorRef
     ) { }
 
@@ -72,50 +70,18 @@ export class ObligacionComponent implements OnInit {
         this.loadInitialData();
     }
 
-    /*loadInitialData() {
+    loadInitialData() {
         forkJoin({
             estados: this.estadoService.list({}),
             tipos: this.tipoService.list({}),
-            pedidos: this.pedidoService.list({})
         }).subscribe({
-            next: ({ estados, tipos, pedidos }) => {
+            next: ({ estados, tipos}) => {
                 this.listEstados = estados;
                 this.listTipos = tipos;
-                this.listPedidos = pedidos;
                 this.search();
             },
             error: (err) => {
                 Swal.fire('Error', 'No se pudo cargar datos iniciales', 'error');
-            }
-        });
-    }*/
-
-    loadInitialData() {
-        console.log('Iniciando carga de datos...'); // Debug
-        
-        forkJoin({
-            estados: this.estadoService.list({}),
-            tipos: this.tipoService.list({}),
-            pedidos: this.pedidoService.list({})
-        }).subscribe({
-            next: ({ estados, tipos, pedidos }) => {
-            console.log('Datos recibidos:', { estados, tipos, pedidos }); // Debug
-            
-            this.listEstados = estados;
-            this.listTipos = tipos;
-            this.listPedidos = pedidos;
-            
-            console.log('Datos asignados:', { 
-                estados: this.listEstados, 
-                tipos: this.listTipos,
-                pedidos: this.listPedidos
-            }); // Debug
-            
-            this.search();
-            },
-            error: (err) => {
-            console.error('Error al cargar datos iniciales:', err); // Debug
-            Swal.fire('Error', 'No se pudo cargar datos iniciales', 'error');
             }
         });
     }
@@ -270,21 +236,26 @@ export class ObligacionComponent implements OnInit {
 
     getTipoDescripcion(tipoId?: number): string {
         const tipo = tipoId ? this.listTipos.find(t => t.id === tipoId) : null;
-        return tipo?.descripcion ?? 'No especificado';
+        return tipo?.nombre ?? 'No especificado';
     }
 
-    getPedidoDescripcion(pedidoId?: number): string {
+    /*getPedidoDescripcion(pedidoId?: number): string {
         const pedido = pedidoId ? this.listPedidos.find(p => p.id === pedidoId) : null;
         return pedido ? `${pedido.codigo} - ${pedido.proveedor?.razonSocial}` : 'No especificado';
-    }
+    }*/
 
     private initTable() {
         this.columns = [
             { name: 'Nro.', prop: 'row', width: 50 },
             { name: 'Código', prop: 'codigo', width: 100 },
-            { name: 'Pedido', prop: 'pedido.codigo', width: 150, pipe: { transform: (p: any) => this.getPedidoDescripcion(p?.id) } },
-            { name: 'Estado', prop: 'estado.descripcion', width: 120, pipe: { transform: (e: any) => this.getEstadoDescripcion(e?.id) } },
-            { name: 'Tipo', prop: 'tipo.descripcion', width: 120, pipe: { transform: (t: any) => this.getTipoDescripcion(t?.id) } },
+            { name: 'Pedido', prop: 'pedido', width: 200, pipe: { transform: (pedido: any) => {
+                if (!pedido) return 'No especificado';
+                    const codigo = pedido.codigo || '';
+                    const razonSocial = pedido.proveedor?.razonSocial || '';
+                    return `${codigo} - ${razonSocial}`;
+                }}},
+            { name: 'Estado', prop: 'estado.descripcion', width: 120 },
+            { name: 'Tipo', prop: 'tipo.nombre', width: 120 },
             { name: 'Monto', prop: 'monto', pipe: { transform: (m: number) => `S/ ${m?.toFixed(2) || '0.00'}` }, width: 100 },
             { name: 'F. Registro', prop: 'fechaRegistro', pipe: { transform: (d: Date) => d ? new Date(d).toLocaleDateString() : '' }, width: 120 },
             { name: 'Acciones', cellTemplate: this.colAccionTemplate, width: 150 }

@@ -98,14 +98,10 @@
             </div>
 
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-12 mb-3">
                     <mat-form-field appearance="fill" class="w-100">
                         <mat-label>Pedido</mat-label>
-                        <mat-select [(ngModel)]="record.pedidoId" name="pedidoId" required>
-                            <mat-option *ngFor="let ped of listPedidos" [value]="ped.id">
-                                {{ ped.codigo }} - {{ ped.proveedor?.razonSocial }}
-                            </mat-option>
-                        </mat-select>
+                        <textarea matInput [(ngModel)]="record.pedidoId" name="pedido" required maxlength="500"></textarea>
                     </mat-form-field>
                 </div>
                 
@@ -125,7 +121,7 @@
                         <mat-label>Tipo</mat-label>
                         <mat-select [(ngModel)]="record.tipoId" name="tipoId" required>
                             <mat-option *ngFor="let tip of listTipos" [value]="tip.id">
-                                {{ tip.descripcion }}
+                                {{ tip.nombre }}
                             </mat-option>
                         </mat-select>
                     </mat-form-field>
@@ -187,7 +183,7 @@
             <div class="col-md-4">
                 <div class="info-block">
                     <div class="info-label">Pedido:</div>
-                    <div class="info-value">{{ getPedidoDescripcion(obligacionSelected.pedido?.id) }}</div>
+                    <div class="info-value">{{ obligacionSelected.pedido?.codigo }}</div>
                 </div>
             </div>
 
