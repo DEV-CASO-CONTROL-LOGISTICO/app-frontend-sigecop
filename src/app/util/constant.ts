@@ -31,3 +31,12 @@ export class RegexConstants {
         event.target.value = event.target.value.replace(/[^a-zA-Z0-9_]/g, '');
     }
 }
+
+export const ESTADO_OBLIGACION = {
+    GENERADO_AUTOMATICO: 1,
+    PENDIENTE_CONTABILIZAR: 2,
+    CONTABILIZADO: 3,
+    APROBADO: 4,
+    PAGO_CONTABILIZAR: 5,
+    PAGO_REGISTRADO: 6
+};

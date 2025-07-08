@@ -31,4 +31,8 @@ export class ObligacionService {
         });
     }
 
+    changeStatus(filter: ObligacionRequest): Observable<ObligacionResponse> {
+            return this.http.post<ObligacionResponse>(`${BASE_URL}/obligacion/changeEstado`, filter);
+    }
+
 }
