@@ -11,18 +11,21 @@ import { MatSelectModule } from "@angular/material/select";
 import { NgxDatatableModule } from "@swimlane/ngx-datatable";
 import { forkJoin } from "rxjs";
 import { RegexConstants } from "../../util/constant";
+import { ESTADO_OBLIGACION } from '../../util/constant';
 import { ObligacionResponse } from "../../model/api/response/ObligacionResponse";
 import { ObligacionRequest } from "../../model/api/request/ObligacionRequest";
 import { EstadoObligacionResponse } from "../../model/api/response/EstadoObligacionResponse";
 import { ObligacionService } from "../../service/gestion/obligacion.service";
 import { EstadoObligacionService } from "../../service/gestion/estadoObligacion.service";
 import Swal from "sweetalert2";
-import { calcularTotal, convertirIsoADDMMAAAA, handleError, setListRow } from "../../util/methods";
+import { convertirIsoADDMMAAAA, setListRow } from "../../util/methods";
 import { TipoObligacionService } from "../../service/master/tipoObligacion.service";
 import { TipoObligacionResponse } from "../../model/api/response/TipoObligacionResponse";
+import { PedidoResponse } from "../../model/api/response/PedidoResponse";
+import { PedidoService } from "../../service/gestion/pedido.service";
 
 @Component({
-    selector: 'app-obligacion',
+    selector: 'app-obligacion-asistente-contable',
     standalone: true,
     imports: [
         CommonModule,
@@ -36,15 +39,15 @@ import { TipoObligacionResponse } from "../../model/api/response/TipoObligacionR
         FormsModule,
         MatIconModule
     ],
-    templateUrl: './obligacion.component.html',
-    styleUrl: './obligacion.component.css'
+    templateUrl: './obligacion-asistente-contable.component.html',
+    styleUrl: './obligacion-asistente-contable.component.css'
 })
 
-export class ObligacionComponent implements OnInit {
+export class ObligacionAsistenteContableComponent implements OnInit {
     public RG = RegexConstants;
     result: ObligacionResponse[] = [];
     filter: ObligacionRequest = {};
-    record: ObligacionResponse = {};
+    record: ObligacionRequest = {};
     obligacionSelected: ObligacionResponse = {};
     columns: any[] = [];
 
@@ -53,8 +56,6 @@ export class ObligacionComponent implements OnInit {
 
     @ViewChild('colAccionTemplate', { static: true }) colAccionTemplate!: TemplateRef<any>;
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate!: TemplateRef<any>;
-    @ViewChild('registrarTemplate', { static: true }) registrarTemplate!: TemplateRef<any>;
-    @ViewChild('crearTemplate', { static: true }) crearTemplate!: TemplateRef<any>;
     @ViewChild('detalleObligacionTemplate', { static: true }) detalleObligacionTemplate!: TemplateRef<any>;
     dialogRef!: MatDialogRef<any>;
     
@@ -100,11 +101,9 @@ export class ObligacionComponent implements OnInit {
         return convertirIsoADDMMAAAA(fecha);
     }
 
-    calcularMontoTotalPorProducto(cantidad: number | null | undefined, precioUnitario: number | null | undefined): number | null {
-        return calcularTotal(cantidad, precioUnitario);
-    }
-
     search() {
+        this.filter.estadoId = ESTADO_OBLIGACION.GENERADO_AUTOMATICO; // Por defecto, mostrar solo pedidos con estado "GENERADO
+        console.log('filter', this.filter);
         this.service.list(this.filter).subscribe({
             next: (resultResponse) => {
                 this.result = [...setListRow(resultResponse)];
@@ -123,68 +122,46 @@ export class ObligacionComponent implements OnInit {
 
     openAdd() {
         this.record = {};
-        this.dialogRef = this.dialog.open(this.crearTemplate, { width: '800px' });
+        this.dialogRef = this.dialog.open(this.dialogTemplate, { width: '800px' });
     }
 
-    openRegistrar(item: ObligacionResponse) {
-        this.service.find({ id: item.id }).subscribe({
-            next: (resultResponse) => {
-                this.record = {
-                    ...resultResponse,
-                    pedido: {
-                        ...resultResponse.pedido,
-                        pedidoProducto: (resultResponse.pedido?.pedidoProducto ?? []).map((pp, index) => ({
-                            row: index + 1,
-                            id: pp.id,
-                            producto: {
-                                id: pp.producto?.id,
-                                nombre: pp.producto?.nombre,
-                                precioUnitario: pp.producto?.precioUnitario
-                            },
-                            cantidad: pp.cantidad,
-                            monto: pp.monto
-                        }))
-                    }
-                };   
-                this.dialogRef = this.dialog.open(this.registrarTemplate, { width: '800px' });
-            },
-            error: (err) => {
-                Swal.close();
-                Swal.fire({
-                    icon: 'warning',
-                    title: '¡Advertencia!',
-                    text: err.error,
-                });
+    openEnviar(item: ObligacionResponse) {
+        Swal.fire({
+            title: 'Confirmar Aceptación de Obligación',
+            text: `¿Está seguro de aceptar la obligación ${item.codigo}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, aceptar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                 
+                if (item.estado) {
+                    item.estado.id = 0;
+                }
+
+                if (item.id !== undefined) {
+                    this.service.changeStatus({ id: item.id, estadoId: ESTADO_OBLIGACION.PENDIENTE_CONTABILIZAR }).subscribe({
+                        next: () => {
+                            Swal.fire('Éxito', 'Obligación aceptada', 'success');
+                            this.search();
+                            this.cdr.detectChanges();
+                        },
+                        error: (err) => {
+                            this.handleError(err);
+                        }
+                    });
+                } else {
+                    Swal.fire('Error', 'El ID de la obligación no está definido', 'error');
+                }
             }
         });
     }
 
     openDetalleObligacion(item: ObligacionResponse) {
-        this.obligacionSelected = {} as ObligacionResponse;
-
-        forkJoin({
-            resultResponse: this.service.find({ id: item.id })
-        }).subscribe({
-            next: ({ resultResponse }) => {
-                this.obligacionSelected = {
-                    ...resultResponse,
-                    pedido: {
-                        ...resultResponse.pedido,
-                        pedidoProducto: (resultResponse.pedido?.pedidoProducto ?? []).map((pp, index) => ({
-                            row: index + 1,
-                            id: pp.id,
-                            producto: {
-                                id: pp.producto?.id,
-                                nombre: pp.producto?.nombre,
-                                precioUnitario: pp.producto?.precioUnitario
-                            },
-                            cantidad: pp.cantidad,
-                            monto: pp.monto
-                        }))
-                    }
-                };
-
-                this.dialogRef = this.dialog.open(this.detalleObligacionTemplate, { width: '800px' });
+        this.service.find({ id: item.id }).subscribe({
+            next: (resultResponse) => {
+                this.obligacionSelected = resultResponse;
             },
             error: (err) => {
                 Swal.close();
@@ -195,76 +172,9 @@ export class ObligacionComponent implements OnInit {
                 });
             }
         });
+    
+        this.dialogRef = this.dialog.open(this.detalleObligacionTemplate, { width: '800px' });
     }
-
-    calcularTotalPagar(): number {
-        const productos = this.record.pedido?.pedidoProducto ?? [];
-        return productos.reduce((total, item) => {
-            const cantidad = item.cantidad || 0;
-            const monto = item.monto || 0;
-            return total + cantidad * monto;
-        }, 0);
-    }
-
-
-    registrarPago() {
-        if (!this.record.descripcion) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Faltan datos',
-                text: 'Debe ingresar la descripción del pago',
-            });
-            return;
-        }
-
-        if (this.record.monto == null) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Faltan datos',
-                text: 'Debe ingresar el monto total a cancelar',
-            });
-            return;
-        }
-
-        const totalPagar = this.calcularTotalPagar();
-        const totalCancelar = this.record.monto ?? 0;
-
-        if (totalPagar !== totalCancelar) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: `El monto a cancelar (S/ ${totalCancelar.toFixed(2)}) debe ser igual al total a pagar (S/ ${totalPagar.toFixed(2)}).`
-            });
-            return;
-        }
-
-        Swal.fire({
-            title: 'Registrar Pago',
-            text: `¿Está seguro de registrar el pago de la obligación ${this.record.codigo}?`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, registrar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                this.service.registrarPago({
-                    id: this.record.id,
-                    descripcion: this.record.descripcion,
-                    monto: this.record.monto
-                }).subscribe({
-                    next: () => {
-                        this.search();
-                        Swal.fire('Éxito', 'Pago registrado correctamente', 'success');
-                        this.dialogRef.close();
-                    },
-                    error: (err) => {
-                        handleError(err);
-                    }
-                });
-            }
-        });
-    }
-
 
     save() {
         if (!this.record.descripcion?.trim()) {
@@ -277,12 +187,12 @@ export class ObligacionComponent implements OnInit {
             return;
         }
 
-        if (!this.record.estado?.id) {
+        if (!this.record.estadoId) {
             Swal.fire('Error', 'Seleccione un estado', 'error');
             return;
         }
 
-        if (!this.record.tipo?.id) {
+        if (!this.record.tipoId) {
             Swal.fire('Error', 'Seleccione un tipo', 'error');
             return;
         }
@@ -304,19 +214,25 @@ export class ObligacionComponent implements OnInit {
         });
     }
 
-    delete(item: ObligacionResponse) {
+    openRechazar(item: ObligacionResponse) {
         Swal.fire({
-            title: 'Confirmar eliminación',
-            text: `¿Está seguro de eliminar la obligación ${item.codigo}?`,
+            title: 'Confirmar Rechazar Obligación',
+            text: `¿Está seguro de rechazar la obligación ${item.codigo}?`,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Sí, eliminar',
+            confirmButtonText: 'Sí, rechazar',
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                this.service.delete(item.id).subscribe({
+                 
+                if (item.estado) {
+                    item.estado.id = 0;
+                } else {
+                    item.estado = { id: 0, descripcion: '' };
+                }
+                this.service.changeStatus({ id: item.id, estadoId: 0 }).subscribe({
                     next: () => {
-                        Swal.fire('Éxito', 'Obligación eliminada', 'success');
+                        Swal.fire('Éxito', 'Obligación rechazada', 'success');
                         this.search();
                         this.cdr.detectChanges();
                     },
@@ -325,28 +241,6 @@ export class ObligacionComponent implements OnInit {
                     }
                 });
             }
-        });
-    }
-
-    verFactura(pedidoId: number) {
-        this.service.verFactura(pedidoId).subscribe(blob => {
-        const url = window.URL.createObjectURL(blob);
-            
-        window.open(url, '_blank');
-        window.URL.revokeObjectURL(url);
-        console.log('URL de la solicitud:', url);
-        }, error => {
-            Swal.fire('Error', 'No se pudo cargar la factura', 'error');
-        });        
-        }
-    
-    verGuia(pedidoId: number) {
-        this.service.verGuia(pedidoId).subscribe(blob => {
-        const url = window.URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        window.URL.revokeObjectURL(url);
-        }, error => {
-            Swal.fire('Error', 'No se pudo cargar la guía', 'error');
         });
     }
 
@@ -363,23 +257,21 @@ export class ObligacionComponent implements OnInit {
     /*getPedidoDescripcion(pedidoId?: number): string {
         const pedido = pedidoId ? this.listPedidos.find(p => p.id === pedidoId) : null;
         return pedido ? `${pedido.codigo} - ${pedido.proveedor?.razonSocial}` : 'No especificado';
-
-        , pipe: { transform: (pedido: any) => {
-                if (!pedido) return 'No especificado';
-                    const codigo = pedido.codigo || '';
-                    const razonSocial = pedido.proveedor?.razonSocial || '';
-                    return `${codigo} - ${razonSocial}`;
-                }}
     }*/
 
     private initTable() {
         this.columns = [
-            { name: 'Nro.', prop: 'row', width: 20 },
-            { name: 'Código', prop: 'codigo', width: 50 },
-            { name: 'Proveedor', prop: 'pedido.proveedor.razonSocial', width: 150},
+            { name: 'Nro.', prop: 'row', width: 50 },
+            { name: 'Código', prop: 'codigo', width: 100 },
+            { name: 'Pedido', prop: 'pedido', width: 200, pipe: { transform: (pedido: any) => {
+                if (!pedido) return 'No especificado';
+                    const codigo = pedido.codigo || '';
+                    const razonSocial = pedido.proveedor?.razonSocial || '';
+                    return `${codigo} - ${razonSocial}`;
+                }}},
             { name: 'Estado', prop: 'estado.descripcion', width: 120 },
             { name: 'Tipo', prop: 'tipo.nombre', width: 120 },
-            //{ name: 'Monto', prop: 'monto', pipe: { transform: (m: number) => `S/ ${m?.toFixed(2) || '0.00'}` }, width: 100 },
+            { name: 'Monto', prop: 'monto', pipe: { transform: (m: number) => `S/ ${m?.toFixed(2) || '0.00'}` }, width: 100 },
             { name: 'F. Registro', prop: 'fechaRegistro', pipe: { transform: (d: Date) => d ? new Date(d).toLocaleDateString() : '' }, width: 120 },
             { name: 'Acciones', cellTemplate: this.colAccionTemplate, width: 150 }
         ];

@@ -28,5 +28,7 @@ export class PedidoResponse extends ClassGeneric {
     esGenerado?: Boolean;         
     esPagado?: Boolean;        
     pedidoProducto?: PedidoProductoResponse[] = [];
-    
+    existeDocumento?: number; // 0: Existe ambas, 1:No existe factura, 2:No existe guia, 3: No existen ambas
+    existeFactura?: boolean;
+    existeGuia?: boolean;
 }

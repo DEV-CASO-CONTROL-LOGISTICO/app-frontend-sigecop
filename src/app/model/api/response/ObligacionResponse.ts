@@ -1,5 +1,4 @@
 import { ClassGeneric } from "../../../util/ClassGeneric";
-import { TipoObligacion } from "../../dto/TipoObligacion";
 import { EstadoObligacionResponse } from "./EstadoObligacionResponse";
 import { PedidoResponse } from "./PedidoResponse";
 import { TipoObligacionResponse } from "./TipoObligacionResponse";

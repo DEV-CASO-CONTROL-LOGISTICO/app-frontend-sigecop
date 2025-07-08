@@ -21,7 +21,6 @@ import { PedidoRequest } from '../../model/api/request/PedidoRequest';
 import { PedidoService } from '../../service/gestion/pedido.service';
 import { EstadoPedidoService } from '../../service/gestion/estadoPedido.service';
 import { PedidoProductoRequest } from '../../model/api/request/PedidoProductoRequest';
-import { url } from 'node:inspector';
 
 @Component({
     selector: 'app-pedido',

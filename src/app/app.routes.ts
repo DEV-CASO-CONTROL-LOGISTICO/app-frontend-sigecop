@@ -18,6 +18,7 @@ import { PedidoAsistenteComponent } from './pages/pedido-asistente/pedido-asiste
 import { PedidoProveedorComponent } from './pages/pedido-proveedor/pedido-proveedor.component';
 import { OrdenInternamientoComponent } from './pages/orden-internamiento/orden-internamiento.component';
 import { ObligacionComponent } from './pages/obligacion/obligacion.component';
+import { ObligacionAsistenteContableComponent } from './pages/obligacion-asistente-contable/obligacion-asistente-contable.component';
 
 export const routes: Routes = [
     { path: 'login', component: LoginComponent },
@@ -38,6 +39,7 @@ export const routes: Routes = [
             { path: 'GestionPedidos', component: PedidoAsistenteComponent, canActivate: [hasRoleGuard] },
             { path: 'PedidosProveedor', component: PedidoProveedorComponent, canActivate: [hasRoleGuard] },
             { path: 'Obligaciones', component: ObligacionComponent, canActivate: [hasRoleGuard] },
+            { path: 'ObligacionesAsistenteContable', component: ObligacionAsistenteContableComponent, canActivate: [hasRoleGuard] },
             { path: 'SinAutorizacion', component: UnauthorizedComponent },
             { path: 'NoEncontrado', component: UnfoundComponent }
         ]
