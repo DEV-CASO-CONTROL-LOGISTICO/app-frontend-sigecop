@@ -9,8 +9,7 @@ import { UserResponse } from "./UserResponse";
 export class ObligacionResponse extends ClassGeneric {
 
     id?: number;
-    codigo?: string;
-    pedido?: PedidoResponse;
+    codigo?: string;    
     tipo?: TipoObligacionResponse;
     estado?: EstadoObligacionResponse;
     descripcion?: string;
@@ -18,5 +17,11 @@ export class ObligacionResponse extends ClassGeneric {
     usuarioCreacion?: UserResponse;
     usuarioEstado?: UserResponse;
     fechaRegistro?: Date;
-    
+    esContabilizado?: Boolean;         
+    esAprobado?: Boolean;         
+    esPorContabilizar?: Boolean;
+    esRegistrado?: Boolean;         
+    esGenerado?: Boolean;         
+    esPendiente?: Boolean; 
+    pedido?: PedidoResponse;
 }

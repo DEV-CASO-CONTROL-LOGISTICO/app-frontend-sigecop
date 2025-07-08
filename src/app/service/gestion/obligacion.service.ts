@@ -31,4 +31,21 @@ export class ObligacionService {
         });
     }
 
+    verFactura(pedidoId: number): Observable<Blob> {
+        return this.http.get(`${BASE_URL}/pedido/obtenerFactura/${pedidoId}`, {
+        responseType: 'blob'
+        });
+    }
+
+    verGuia(pedidoId: number): Observable<Blob> {
+        return this.http.get(`${BASE_URL}/pedido/obtenerGuia/${pedidoId}`, {
+        responseType: 'blob'
+        });
+    }
+
+    registrarPago(data: any): Observable<any> {
+        return this.http.post(`${BASE_URL}/obligacion/registrar-pago`, data);
+    }
+
+
 }
