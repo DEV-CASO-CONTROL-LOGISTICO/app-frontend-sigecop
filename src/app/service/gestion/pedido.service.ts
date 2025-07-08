@@ -77,5 +77,8 @@ export class PedidoService {
         responseType: 'blob'
         });
     }
+    existeDocumentos(pedidoId: number): Observable<PedidoResponse> {
+        return this.http.get<PedidoResponse>(`${BASE_URL}/pedido/existeDocumentos/${pedidoId}`);
+    }
 
 }

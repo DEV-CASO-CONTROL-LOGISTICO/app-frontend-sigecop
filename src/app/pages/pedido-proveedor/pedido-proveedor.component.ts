@@ -165,9 +165,10 @@ export class PedidoProveedorComponent implements OnInit {
         this.observacionEnvio = pedido.observacionEnvio || '';
 
         forkJoin({
-            resultResponse: this.service.find({ id: pedido.id })
+            resultResponse: this.service.find({ id: pedido.id }),
+            resultResponseDocumento: this.service.existeDocumentos(pedido.id ?? 0)
         }).subscribe({
-            next: ({ resultResponse }) => {
+            next: ({ resultResponse ,resultResponseDocumento}) => {
                 this.record = {
                     ...resultResponse,
                     pedidoProducto: (resultResponse.pedidoProducto ?? []).map((pp, index) => ({
@@ -186,6 +187,25 @@ export class PedidoProveedorComponent implements OnInit {
                 
                 this.observacionEnvio = resultResponse.observacionEnvio || '';
                 this.record.fechaRegistro = new Date();
+                console.log('resultResponseDocumento', resultResponseDocumento);
+                // Lógica adicional si existe documento 
+                if (resultResponseDocumento.existeDocumento == 0) {
+                    this.record.existeFactura = true;
+                    this.record.existeGuia = true;
+                } else if (resultResponseDocumento.existeDocumento === 1) {
+                    this.record.existeFactura = false;
+                    this.record.existeGuia = true;
+                } else if (resultResponseDocumento.existeDocumento === 2) {
+                    this.record.existeFactura = true;
+                    this.record.existeGuia = false;
+                } else if (resultResponseDocumento.existeDocumento === 3) {
+                    this.record.existeFactura = false;
+                    this.record.existeGuia = false;
+                }else{
+                    this.record.existeFactura = true;
+                    this.record.existeGuia = true;
+                }
+                
             },
             error: (err) => {
                 Swal.fire('Error', 'No se pudo cargar el detalle del pedido', 'error');
@@ -451,5 +471,27 @@ export class PedidoProveedorComponent implements OnInit {
     calcularSubTotalRegistrado(): number {
         const total = this.calcularTotalRegistrado();
         return parseFloat((total / 1.18).toFixed(2));
+    }
+
+    verFactura(pedidoId: number) {
+        this.service.verFactura(pedidoId).subscribe(blob => {
+        const url = window.URL.createObjectURL(blob);
+        
+        window.open(url, '_blank');
+        window.URL.revokeObjectURL(url);
+        console.log('URL de la solicitud:', url);
+        }, error => {
+            Swal.fire('Error', 'No se pudo cargar la factura', 'error');
+        });        
+    }
+
+    verGuia(pedidoId: number) {
+        this.service.verGuia(pedidoId).subscribe(blob => {
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        window.URL.revokeObjectURL(url);
+        }, error => {
+            Swal.fire('Error', 'No se pudo cargar la guía', 'error');
+        });
     }
 }

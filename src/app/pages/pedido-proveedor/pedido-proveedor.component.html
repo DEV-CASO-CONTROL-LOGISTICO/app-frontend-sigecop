@@ -108,7 +108,7 @@
             </tfoot>       
         </table>   
         <div class="row mb-3">
-            <div class="col-md-6 mb-2">
+            <!--<div class="col-md-6 mb-2">
                 <button mat-stroked-button color="primary" (click)="descargarFactura()" style="margin-bottom: 8px; width: 100%;">
                     <mat-icon>download</mat-icon> Descargar Factura
                 </button>
@@ -116,6 +116,16 @@
             <div class="col-md-6 mb-2">
                 <button mat-stroked-button color="primary" (click)="descargarGuia()" style="margin-bottom: 8px; width: 100%;">
                     <mat-icon>download</mat-icon> Descargar Guía
+                </button>
+            </div>-->
+            <div class="col-md-6 mb-2">
+                <button mat-stroked-button color="primary" (click)="verFactura(record.id!)" style="margin-bottom: 8px; width: 100%;">
+                    <mat-icon>visibility</mat-icon> Ver Factura
+                </button>
+            </div>
+            <div class="col-md-6 mb-2">
+                <button mat-stroked-button color="primary" (click)="verGuia(record.id!)" style="margin-bottom: 8px; width: 100%;">
+                    <mat-icon>visibility</mat-icon> Ver Guía
                 </button>
             </div>
         </div> 
@@ -188,7 +198,7 @@
                     <input matInput [(ngModel)]="record.numeroFactura" maxlength="50">
                 </mat-form-field>
             </div>-->
-            <div class="col-md-6 mb-2">
+            <div class="col-md-6 mb-2" *ngIf="!record.existeFactura">
                 <input type="file" class="file-input" (change)="onFacturaFileChange($event)" #fileUpload>
 
                 <div class="file-upload">
@@ -216,7 +226,7 @@
                     <input type="file" accept="application/pdf" (change)="onGuiaFileChange($event)">
                 </mat-form-field>
             </div>-->
-            <div class="col-md-6 mb-2">
+            <div class="col-md-6 mb-2" *ngIf="!record.existeGuia">
                 <input type="file" class="file-input" (change)="onGuiaFileChange($event)" #fileUploadGuia>
 
                 <div class="file-upload">
@@ -232,7 +242,7 @@
                     <input matInput [(ngModel)]="record.serieGuia" maxlength="20">
                 </mat-form-field>
             </div>-->
-            <div class="col-md-6 mb-2">
+            <div class="col-md-6 mb-2" style="margin-top: 20px;">
                 <mat-form-field appearance="fill" class="w-100">
                     <mat-label>Fecha Emisión*</mat-label>
                     <input matInput [matDatepicker]="pickerEmision" [(ngModel)]="record.fechaRegistro" readonly>
@@ -240,7 +250,7 @@
                     <mat-datepicker #pickerEmision></mat-datepicker>
                 </mat-form-field>
             </div>
-            <div class="col-md-6 mb-2">
+            <div class="col-md-6 mb-2" style="margin-top: 20px;">
                 <mat-form-field appearance="fill" class="w-100">
                     <mat-label>Fecha Estimada Entrega*</mat-label>
                     <input matInput [matDatepicker]="pickerEntrega" [(ngModel)]="record.fechaEntrega" [value]="record.fechaEntrega" readonly>
@@ -249,6 +259,17 @@
                 </mat-form-field>
             </div>
             
+            <div class="col-md-6 mb-2" *ngIf="record.existeFactura">
+                <button mat-stroked-button color="primary" (click)="verFactura(record.id!)" style="margin-bottom: 8px; width: 100%;">
+                    <mat-icon>visibility</mat-icon> Ver Factura
+                </button>
+            </div>
+            <div class="col-md-6 mb-2" *ngIf="record.existeGuia">
+                <button mat-stroked-button color="primary" (click)="verGuia(record.id!)" style="margin-bottom: 8px; width: 100%;">
+                    <mat-icon>visibility</mat-icon> Ver Guía
+                </button>
+            </div>
+            <!--      
             <div class="col-md-6 mb-2">
                 <button mat-stroked-button color="primary" (click)="descargarFactura()" style="margin-bottom: 8px; width: 100%;">
                     <mat-icon>download</mat-icon> Descargar Factura
@@ -259,6 +280,7 @@
                     <mat-icon>download</mat-icon> Descargar Guía
                 </button>
             </div>
+            -->
         </div>
         
         <mat-form-field appearance="fill" class="w-100" *ngIf="record.esDevuelto">
