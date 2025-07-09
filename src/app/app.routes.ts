@@ -19,6 +19,8 @@ import { PedidoProveedorComponent } from './pages/pedido-proveedor/pedido-provee
 import { OrdenInternamientoComponent } from './pages/orden-internamiento/orden-internamiento.component';
 import { ObligacionComponent } from './pages/obligacion/obligacion.component';
 import { ObligacionAsistenteContableComponent } from './pages/obligacion-asistente-contable/obligacion-asistente-contable.component';
+import { ObligacionGerenteFinancieroComponent } from './pages/obligacion-gerente-financiero/obligacion-gerente-financiero.component';
+import { ObligacionGerenteGeneralComponent } from './pages/obligacion-gerente-general/obligacion-gerente-general.component';
 
 export const routes: Routes = [
     { path: 'login', component: LoginComponent },
@@ -40,6 +42,8 @@ export const routes: Routes = [
             { path: 'PedidosProveedor', component: PedidoProveedorComponent, canActivate: [hasRoleGuard] },
             { path: 'Obligaciones', component: ObligacionComponent, canActivate: [hasRoleGuard] },
             { path: 'ObligacionesAsistenteContable', component: ObligacionAsistenteContableComponent, canActivate: [hasRoleGuard] },
+            { path: 'ObligacionesGerenteFinanciero', component: ObligacionGerenteFinancieroComponent, canActivate: [hasRoleGuard] },
+            { path: 'ObligacionesGerenteGeneral', component: ObligacionGerenteGeneralComponent, canActivate: [hasRoleGuard] },
             { path: 'SinAutorizacion', component: UnauthorizedComponent },
             { path: 'NoEncontrado', component: UnfoundComponent }
         ]
