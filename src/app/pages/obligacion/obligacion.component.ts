@@ -1,6 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectorRef, Component, OnInit, TemplateRef, ViewChild } from "@angular/core";
-import { FormsModule } from "@angular/forms";
+import { FormGroup, FormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatDatepickerModule } from "@angular/material/datepicker";
 import { MatDialog, MatDialogModule, MatDialogRef } from "@angular/material/dialog";
@@ -53,7 +53,7 @@ export class ObligacionComponent implements OnInit {
 
     @ViewChild('colAccionTemplate', { static: true }) colAccionTemplate!: TemplateRef<any>;
     @ViewChild('dialogTemplate', { static: true }) dialogTemplate!: TemplateRef<any>;
-    @ViewChild('registrarTemplate', { static: true }) registrarTemplate!: TemplateRef<any>;
+    @ViewChild('enviarTemplate', { static: true }) enviarTemplate!: TemplateRef<any>;
     @ViewChild('crearTemplate', { static: true }) crearTemplate!: TemplateRef<any>;
     @ViewChild('detalleObligacionTemplate', { static: true }) detalleObligacionTemplate!: TemplateRef<any>;
     dialogRef!: MatDialogRef<any>;
@@ -107,7 +107,18 @@ export class ObligacionComponent implements OnInit {
     search() {
         this.service.list(this.filter).subscribe({
             next: (resultResponse) => {
-                this.result = [...setListRow(resultResponse)];
+
+                this.result = resultResponse.map((item, index) => {
+                    const proveedor = item.pedido?.proveedor?.razonSocial;
+                    const usuarioPago = item.nombreUsuarioPago;
+
+                    return {
+                        ...item,
+                        row: index + 1,
+                        proveedor_o_usuario: proveedor ?? usuarioPago
+                    };
+                });
+
                 this.initTable();
             },
             error: (err) => {
@@ -121,12 +132,76 @@ export class ObligacionComponent implements OnInit {
         });
     }
 
+
     openAdd() {
-        this.record = {};
+        this.record = {
+            descripcion: '',
+            monto: 0,
+            tipo: {},
+            estado: { id: 2 },
+            esPendiente: true
+        };
         this.dialogRef = this.dialog.open(this.crearTemplate, { width: '800px' });
     }
 
-    openRegistrar(item: ObligacionResponse) {
+
+    save() {
+        // Validar descripción
+        const descripcion = this.record.descripcion?.trim();
+        if (!descripcion) {
+            Swal.fire('Error', 'La descripción es obligatoria', 'error');
+            return;
+        }
+
+        if (descripcion.length > 500) {
+            Swal.fire('Error', 'La descripción no puede exceder los 500 caracteres', 'error');
+            return;
+        }
+
+        // Validar monto
+        if (this.record.monto == null || this.record.monto <= 0) {
+            Swal.fire('Error', 'Debe ingresar un monto válido mayor a 0', 'error');
+            return;
+        }
+
+        // Validar tipo de obligación
+        if (!this.record.tipo?.id) {
+            Swal.fire('Error', 'Seleccione un tipo de obligación', 'error');
+            return;
+        }
+
+        // Validar cuenta bancaria
+        if (!this.record.cuentaBancariaTemporal?.trim()) {
+            Swal.fire('Error', 'Debe ingresar una cuenta bancaria', 'error');
+            return;
+        }
+
+        // Validar nombre de usuario a pagar
+        if (!this.record.nombreUsuarioPago?.trim()) {
+            Swal.fire('Error', 'Debe ingresar el nombre de la persona a pagar', 'error');
+            return;
+        }
+
+        const payload: ObligacionRequest = {
+            ...this.record,
+            id: undefined,
+            tipoId: this.record.tipo.id,
+            estadoId: 3,
+        };
+
+        this.service.save(payload).subscribe({
+            next: () => {
+                Swal.fire('Éxito', 'Obligación registrada correctamente', 'success');
+                this.search();
+                this.dialogRef.close();
+            },
+            error: (err) => this.handleError(err)
+        });
+    }
+
+
+
+    openEnviar(item: ObligacionResponse) {
         this.service.find({ id: item.id }).subscribe({
             next: (resultResponse) => {
                 this.record = {
@@ -146,7 +221,7 @@ export class ObligacionComponent implements OnInit {
                         }))
                     }
                 };   
-                this.dialogRef = this.dialog.open(this.registrarTemplate, { width: '800px' });
+                this.dialogRef = this.dialog.open(this.enviarTemplate, { width: '800px' });
             },
             error: (err) => {
                 Swal.close();
@@ -161,41 +236,37 @@ export class ObligacionComponent implements OnInit {
 
     openDetalleObligacion(item: ObligacionResponse) {
         this.obligacionSelected = {} as ObligacionResponse;
+        const tienePedido = item.pedido && Array.isArray(item.pedido.pedidoProducto);
 
-        forkJoin({
-            resultResponse: this.service.find({ id: item.id })
-        }).subscribe({
-            next: ({ resultResponse }) => {
-                this.obligacionSelected = {
-                    ...resultResponse,
-                    pedido: {
-                        ...resultResponse.pedido,
-                        pedidoProducto: (resultResponse.pedido?.pedidoProducto ?? []).map((pp, index) => ({
-                            row: index + 1,
-                            id: pp.id,
-                            producto: {
-                                id: pp.producto?.id,
-                                nombre: pp.producto?.nombre,
-                                precioUnitario: pp.producto?.precioUnitario
-                            },
-                            cantidad: pp.cantidad,
-                            monto: pp.monto
-                        }))
-                    }
-                };
-
-                this.dialogRef = this.dialog.open(this.detalleObligacionTemplate, { width: '800px' });
+        if (tienePedido) {
+            const productos = item.pedido!.pedidoProducto!.map((pp, index) => ({
+            row: index + 1,
+            id: pp.id,
+            producto: {
+                id: pp.producto?.id,
+                nombre: pp.producto?.nombre,
+                precioUnitario: pp.producto?.precioUnitario
             },
-            error: (err) => {
-                Swal.close();
-                Swal.fire({
-                    icon: 'warning',
-                    title: '¡Advertencia!',
-                    text: err.error,
-                });
+            cantidad: pp.cantidad,
+            monto: pp.monto
+            }));
+
+            this.obligacionSelected = {
+            ...item,
+            pedido: {
+                ...item.pedido!,
+                pedidoProducto: productos
             }
-        });
+            };
+        } else {
+            this.obligacionSelected = { ...item };
+        }
+
+        console.log('Productos cargados:', this.obligacionSelected.pedido?.pedidoProducto);
+        this.dialogRef = this.dialog.open(this.detalleObligacionTemplate, { width: '800px' });        
     }
+
+
 
     calcularTotalPagar(): number {
         const productos = this.record.pedido?.pedidoProducto ?? [];
@@ -207,89 +278,42 @@ export class ObligacionComponent implements OnInit {
     }
 
 
-    registrarPago() {
-        if (!this.record.descripcion) {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Faltan datos',
-                text: 'Debe ingresar la descripción del pago',
-            });
+    enviarPago(item: ObligacionResponse) {
+        if (!this.record.descripcion?.trim()) {
+            Swal.fire('Campos incompletos', 'Debe ingresar la descripción', 'warning');
             return;
         }
 
-        if (this.record.monto == null) {
+        if (!this.record.cuentaBancariaTemporal?.trim()) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Faltan datos',
-                text: 'Debe ingresar el monto total a cancelar',
-            });
-            return;
-        }
-
-        const totalPagar = this.calcularTotalPagar();
-        const totalCancelar = this.record.monto ?? 0;
-
-        if (totalPagar !== totalCancelar) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: `El monto a cancelar (S/ ${totalCancelar.toFixed(2)}) debe ser igual al total a pagar (S/ ${totalPagar.toFixed(2)}).`
+                text: 'Debe ingresar la cuenta bancaria',
             });
             return;
         }
 
         Swal.fire({
             title: 'Registrar Pago',
-            text: `¿Está seguro de registrar el pago de la obligación ${this.record.codigo}?`,
+            text: `¿Está seguro de registrar el pago de la obligación ${item.codigo}?`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Sí, registrar',
             cancelButtonText: 'Cancelar'
         }).then((result) => {
-            if (result.isConfirmed) {
-                this.service.registrarPago({
-                    id: this.record.id,
-                    descripcion: this.record.descripcion,
-                    monto: this.record.monto
-                }).subscribe({
+            if (result.isConfirmed) {        
+                item.estado = { id: 3, descripcion: 'Enviado por aprobacion' };
+
+                this.service.changeStatus({ id: item.id, estadoId: 3 }).subscribe({
                     next: () => {
+                        Swal.fire('Éxito', 'Obligación registrada', 'success');
                         this.search();
-                        Swal.fire('Éxito', 'Pago registrado correctamente', 'success');
-                        this.dialogRef.close();
+                        this.cdr.detectChanges();
                     },
                     error: (err) => {
-                        handleError(err);
+                        this.handleError(err);
                     }
                 });
-            }
-        });
-    }
-
-
-    save() {
-        if (!this.record.descripcion?.trim()) {
-            Swal.fire('Error', 'Complete todos los campos obligatorios', 'error');
-            return;
-        }
-
-        if (this.record.descripcion?.length > 500) {
-            Swal.fire('Error', 'La descripción no puede exceder los 500 caracteres', 'error');
-            return;
-        }
-
-        if (!this.record.monto || this.record.monto <= 0) {
-            Swal.fire('Error', 'Ingrese un monto válido', 'error');
-            return;
-        }
-
-        this.service.save(this.record).subscribe({
-            next: (response) => {
-                Swal.fire('Éxito', 'Obligación guardada correctamente', 'success');
-                this.search();
-                this.dialogRef.close();
-            },
-            error: (err) => {
-                this.handleError(err);
             }
         });
     }
@@ -318,13 +342,40 @@ export class ObligacionComponent implements OnInit {
         });
     }
 
+    openRechazar(item: ObligacionResponse) {
+        Swal.fire({
+            title: 'Confirmar Rechazar Obligación',
+            text: `¿Está seguro de rechazar la obligación ${item.codigo}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, rechazar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {        
+                item.estado = { id: 7, descripcion: 'Observado por documentos' };
+
+                this.service.changeStatus({ id: item.id, estadoId: 7 }).subscribe({
+                    next: () => {
+                        Swal.fire('Éxito', 'Obligación rechazada', 'success');
+                        this.search();
+                        this.cdr.detectChanges();
+                    },
+                    error: (err) => {
+                        this.handleError(err);
+                    }
+                });
+            }
+        });
+    }
+
+
+
     verFactura(pedidoId: number) {
         this.service.verFactura(pedidoId).subscribe(blob => {
         const url = window.URL.createObjectURL(blob);
             
         window.open(url, '_blank');
         window.URL.revokeObjectURL(url);
-        console.log('URL de la solicitud:', url);
         }, error => {
             Swal.fire('Error', 'No se pudo cargar la factura', 'error');
         });        
@@ -340,11 +391,12 @@ export class ObligacionComponent implements OnInit {
         return tipo?.nombre ?? 'No especificado';
     }
 
+
     private initTable() {
         this.columns = [
             { name: 'Nro.', prop: 'row', width: 20 },
             { name: 'Código', prop: 'codigo', width: 50 },
-            { name: 'Proveedor', prop: 'pedido.proveedor.razonSocial', width: 150},
+            { name: 'Proveedor/Usuario a Pagar', prop: 'proveedor_o_usuario', width: 150, cellClass: 'text-break'},
             { name: 'Estado', prop: 'estado.descripcion', width: 120 },
             { name: 'Tipo', prop: 'tipo.nombre', width: 120 },
             { name: 'F. Registro', prop: 'fechaRegistro', pipe: { transform: (d: Date) => d ? new Date(d).toLocaleDateString() : '' }, width: 120 },
