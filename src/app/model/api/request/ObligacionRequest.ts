@@ -1,11 +1,10 @@
 import { ClassGeneric } from "../../../util/ClassGeneric";
-import { PedidoProductoRequest } from "./PedidoProductoRequest";
 
 
 export class ObligacionRequest extends ClassGeneric{
 
     id?: number;
-    codigo?: String;
+    codigo?: string;
     pedidoId?: number;
     tipoId?: number;
     estadoId?: number;  
@@ -13,4 +12,7 @@ export class ObligacionRequest extends ClassGeneric{
     monto?: number;
     fechaRegistro?: Date;
     proveedorRazonSocial?: string;
+    fechaPago?: Date;
+    nombreUsuarioPago?: string;
+    cuentaBancariaTemporal?: string;
 }

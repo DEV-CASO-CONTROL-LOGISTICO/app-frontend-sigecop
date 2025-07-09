@@ -23,4 +23,7 @@ export class ObligacionResponse extends ClassGeneric {
     esGenerado?: Boolean;         
     esPendiente?: Boolean; 
     pedido?: PedidoResponse;
+    fechaPago?: Date;
+    nombreUsuarioPago?: string;
+    cuentaBancariaTemporal?: string;
 }

@@ -69,97 +69,72 @@
         <button class="btn btn-primary btn-sm" (click)="openDetalleObligacion(row)" title="Ver">
             <i class="fas fa-eye"></i>
         </button>
-        <button class="btn btn-success btn-sm" style="margin-left: 5px;" *ngIf="row.estado.id === 1 || row.estado.id === 2" (click)="openRegistrar(row)" title="Registrar">
-            <i class="fa-solid fa-circle-check"></i>
+        <button class="btn btn-success btn-sm" style="margin-left: 5px;"
+            *ngIf="row.estado.id === 1 || row.estado.id === 2 || row.estado.id === 7"
+            (click)="openEnviar(row)" title="Enviar">
+            <i class="fas fa-paper-plane"></i>
         </button>
-
         <button class="btn btn-danger btn-sm" style="margin-left: 5px;" (click)="delete(row)" title="Eliminar">
             <i class="fas fa-trash"></i>
+        </button>
+        <button class="btn btn-warning btn-sm" style="margin-left: 5px;" *ngIf="row.estado.id === 1 || row.estado.id === 2" (click)="openRechazar(row)" title="Rechazar">
+            <i class="fas fa-times"></i>
         </button>
     </ng-template>
 </ngx-datatable>
 
-<!-- Dialogo para Crear Obligación -->
+<!--Crear una obligación manualmente-->
 <ng-template #crearTemplate>
-    <h2 mat-dialog-title>{{ record.id ? 'Editar' : 'Nueva' }} Obligación</h2>
-    <mat-dialog-content>
-        <form (ngSubmit)="save()" #obligacionForm="ngForm">
-            <div class="row mb-3" *ngIf="record.id">
-                <div class="col-md-4">
-                    <div class="info-block">
-                        <div class="info-label">Código</div>
-                        <div class="info-value">{{ record.codigo }}</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="info-block">
-                        <div class="info-label">Fecha Registro</div>
-                        <div class="info-value">{{ record.fechaRegistro | date:'dd/MM/yyyy' }}</div>
-                    </div>
-                </div>
-            </div>
+    <h2 mat-dialog-title>Crear Obligación Manual</h2>
+    <mat-dialog-content class="mat-typography">
+        <form (ngSubmit)="save()" #crearForm="ngForm">
+            <!-- Tipo de Obligación -->
+            <mat-form-field appearance="fill" class="w-100 mb-3">
+                <mat-label>Tipo de Obligación</mat-label>
+                <mat-select [(ngModel)]="record.tipo!.id" name="tipoId" required>
+                    <mat-option *ngFor="let tipo of listTipos" [value]="tipo.id">
+                        {{ tipo.nombre }}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
 
-            <div class="row">
-                <!-- Campo Pedido (solo ID) -->
-                <div class="col-md-12 mb-3" *ngIf="record.id">
-                    <mat-form-field appearance="fill" class="w-100">
-                        <mat-label>Pedido</mat-label>
-                        <input matInput [value]="record.pedido?.codigo" readonly>
-                    </mat-form-field>
-                </div>
-                
-                <!-- Estado -->
-                <div class="col-md-6 mb-3">
-                    <mat-form-field appearance="fill" class="w-100">
-                        <mat-label>Estado</mat-label>
-                        <mat-select [ngModel]="record.estado?.id" (ngModelChange)="record.estado = $event" name="estadoId" required>
-                            <mat-option *ngFor="let est of listEstados" [value]="est.id">
-                                {{ est.descripcion }}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-                
-                <!-- Tipo -->
-                <div class="col-md-6 mb-3">
-                    <mat-form-field appearance="fill" class="w-100">
-                        <mat-label>Tipo</mat-label>
-                        <mat-select [ngModel]="record.tipo?.id" (ngModelChange)="record.tipo = $event" name="tipoId" required>
-                            <mat-option *ngFor="let tip of listTipos" [value]="tip.id">
-                                {{ tip.nombre }}
-                            </mat-option>
-                        </mat-select>
-                    </mat-form-field>
-                </div>
-                
-                <!-- Monto -->
-                <div class="col-md-6 mb-3">
-                    <mat-form-field appearance="fill" class="w-100">
-                        <mat-label>Monto</mat-label>
-                        <input matInput [ngModel]="record.monto" (ngModelChange)="record.monto = $event" name="monto" type="number" step="0.01" min="0" required>
-                    </mat-form-field>
-                </div>
-                
-                <!-- Descripción -->
-                <div class="col-md-12 mb-3">
-                    <mat-form-field appearance="fill" class="w-100">
-                        <mat-label>Descripción</mat-label>
-                        <textarea matInput [ngModel]="record.descripcion" (ngModelChange)="record.descripcion = $event" name="descripcion" required maxlength="500"></textarea>
-                    </mat-form-field>
-                </div>
-            </div>
-            
+            <!-- Descripción -->
+            <mat-form-field appearance="fill" class="w-100 mb-3">
+                <mat-label>Descripción</mat-label>
+                <textarea matInput [(ngModel)]="record.descripcion" name="descripcion" required maxlength="500"></textarea>
+            </mat-form-field>
+
+            <!-- Monto -->
+            <mat-form-field appearance="fill" class="w-100 mb-3">
+                <mat-label>Monto</mat-label>
+                <input matInput type="number" [(ngModel)]="record.monto" name="monto" step="0.01" min="0" required>
+            </mat-form-field>
+
+            <!-- Nombre Usuario Pago -->
+            <mat-form-field appearance="fill" class="w-100 mb-3">
+                <mat-label>Nombre Usuario Pago</mat-label>
+                <input matInput [(ngModel)]="record.nombreUsuarioPago" name="nombreUsuarioPago">
+            </mat-form-field>
+
+            <!-- Cuenta Bancaria Temporal -->
+            <mat-form-field appearance="fill" class="w-100 mb-3">
+                <mat-label>Cuenta Bancaria </mat-label>
+                <input matInput [(ngModel)]="record.cuentaBancariaTemporal" name="cuentaBancariaTemporal">
+            </mat-form-field>
+
             <mat-dialog-actions align="end">
                 <button mat-button type="button" (click)="dialogRef.close()">Cancelar</button>
-                <button mat-raised-button color="primary" type="submit" [disabled]="!obligacionForm.valid">Guardar</button>
+                <button mat-raised-button color="primary" type="submit" [disabled]="!crearForm.valid">Guardar</button>
             </mat-dialog-actions>
         </form>
     </mat-dialog-content>
+    
 </ng-template>
 
-<!-- Dialogo para Registrar Obligación -->
-<ng-template #registrarTemplate>
-    <h2 mat-dialog-title>Registrar Obligación</h2>
+
+<!-- Dialogo para Enviar Obligación -->
+<ng-template #enviarTemplate>
+    <h2 mat-dialog-title>Enviar Obligación</h2>
     <mat-dialog-content class="mat-typography">
     <!-- Información principal -->
     <div class="row mb-4">
@@ -196,49 +171,55 @@
             </div>
             <div class="detail-row">
                 <span class="detail-label">RUC: </span>
-                <span class="detail-value">{{ record.pedido?.proveedor?.ruc }}</span>
+                <span class="detail-value">{{ record.pedido?.proveedor?.ruc || 'Sin especificar'}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Usuario a Pagar: </span>
+                <span class="detail-value">{{ record.nombreUsuarioPago }}</span>
             </div>
         </div>
         
     </div>
 
-        <!-- Campo editable: Descripción -->
+        <!-- Campos editables-->
          <mat-form-field appearance="fill" class="w-100 mt-3">
             <mat-label>Descripción</mat-label>
-            <textarea matInput [(ngModel)]="record.descripcion" name="descripcion" maxlength="500" required></textarea>
+                <textarea matInput [(ngModel)]="record.descripcion" name="descripcion" maxlength="500" required></textarea>
             <mat-error *ngIf="!record.descripcion">La descripción es requerida</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="fill" class="w-100 mb-3">
+                <mat-label>Cuenta Bancaria </mat-label>
+                    <textarea matInput [(ngModel)]="record.cuentaBancariaTemporal" name="cuentaBancariaTemporal" maxlength="500" required></textarea>
+                <mat-error *ngIf="!record.cuentaBancariaTemporal">La cuenta bancaria es requerida</mat-error>
         </mat-form-field>
 
         <!-- Productos del Pedido -->
         <div *ngIf="record.pedido?.pedidoProducto?.length">
             <h3 class="section-title">Productos incluidos</h3>
             <div class="table-responsive">
-                <table class="table table-sm table-hover">
-                <thead>
-                    <tr>
-                    <th>Producto</th>
-                    <th class="text-right">Cantidad</th>
-                    <th class="text-right">P. Unitario</th>
-                    <th class="text-right">Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let item of record.pedido?.pedidoProducto">
-                    <td>{{ item.producto?.nombre || 'Producto genérico' }}</td>
-                    <td class="text-right">{{ item.cantidad | number }}</td>
-                    <td class="text-right">S/ {{ item.monto | number:'1.2-2' }}</td>
-                    <td class="text-right">S/ {{ calcularMontoTotalPorProducto(item.cantidad, item.monto) | number:'1.2-2' }}</td>
-                    </tr>
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="3" class="text-right font-weight-bold">Total a Pagar:</td>
-                        <td class="text-right font-weight-bold">S/ {{ record.monto | number:'1.2-2' }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="3" class="text-right font-weight-bold align-middle">Total a Cancelar:</td>
-                        <td class="text-right font-weight-bold">S/ {{ record.monto | number:'1.2-2' }}</td>
-                    </tr>
+                 <table class="table table-bordered table-hover" style="min-width: 700px;">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width: 50%; word-break: break-word;">Producto</th>
+                                <th class="text-right" style="white-space: nowrap;">Cantidad</th>
+                                <th class="text-right" style="white-space: nowrap;">P. Unitario</th>
+                                <th class="text-right" style="white-space: nowrap;">Subtotal</th>
+                            </tr>
+                        </thead>
+                    <tbody>
+                        <tr *ngFor="let item of record.pedido?.pedidoProducto">
+                            <td style="word-break: break-word;">{{ item.producto?.nombre || 'Producto genérico' }}</td>
+                            <td class="text-right">{{ item.cantidad | number }}</td>
+                            <td class="text-right">S/ {{ item.monto | number:'1.2-2' }}</td>
+                            <td class="text-right">S/ {{ calcularMontoTotalPorProducto(item.cantidad, item.monto) | number:'1.2-2' }}</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-right font-weight-bold">Total a Pagar:</td>
+                            <td class="text-right font-weight-bold">S/ {{ record.monto | number:'1.2-2' }}</td>
+                        </tr>
                     </tfoot>
                 </table>
             </div>
@@ -248,7 +229,7 @@
     <!-- Acciones -->
     <mat-dialog-actions align="end">
         <button mat-button type="button" (click)="dialogRef.close()">Cancelar</button>
-        <button mat-raised-button color="primary" type="button" (click)="registrarPago()" [disabled]="!record.descripcion">Registrar</button>
+        <button mat-raised-button color="primary" type="button" (click)="enviarPago(record)" [disabled]="!record.descripcion">Enviar</button>
     </mat-dialog-actions>
 </ng-template>
 
@@ -305,6 +286,12 @@
                         {{ obligacionSelected.pedido?.numeroFactura || 'Pendiente' }}
                     </span>
                 </div>
+                <div class="detail-row">
+                    <span class="detail-label">Usuario a pagar: </span>
+                    <span class="detail-value">
+                        {{ obligacionSelected.nombreUsuarioPago || 'Sin especificar'  }}
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -315,35 +302,38 @@
         </div>
 
         <!-- Sección 3: Productos del pedido -->
-        <div *ngIf="obligacionSelected.pedido?.pedidoProducto?.length" class="mt-4">
-            <h3 class="section-title">Productos incluidos</h3>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover">
-                    <thead>
-                        <tr>
-                            <th>Producto</th>
-                            <th class="text-right">Cantidad</th>
-                            <th class="text-right">P. Unitario</th>
-                            <th class="text-right">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr *ngFor="let item of obligacionSelected.pedido?.pedidoProducto">
-                            <td>{{ item.producto?.nombre || 'Producto genérico' }}</td>
-                            <td class="text-right">{{ item.cantidad | number }}</td>
-                            <td class="text-right">S/ {{ item.monto | number:'1.2-2' }}</td>
-                            <td class="text-right">S/ {{ calcularMontoTotalPorProducto(item.cantidad, item.monto) | number:'1.2-2' }}</td>
-                        </tr>
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="3" class="text-right font-weight-bold">Total a Pagar:</td>
-                            <td class="text-right font-weight-bold">S/ {{ obligacionSelected.monto | number:'1.2-2' }}</td>
-                        </tr>
-                    </tfoot>
-                </table>
+        <ng-container *ngIf="obligacionSelected.pedido?.pedidoProducto as productos">
+            <div *ngIf="productos.length > 0" class="mt-4">
+                <h3 class="section-title">Productos incluidos</h3>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" style="min-width: 700px;">
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width: 50%; word-break: break-word;">Producto</th>
+                                <th class="text-right" style="white-space: nowrap;">Cantidad</th>
+                                <th class="text-right" style="white-space: nowrap;">P. Unitario</th>
+                                <th class="text-right" style="white-space: nowrap;">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let item of productos">
+                                <td style="word-break: break-word;">{{ item.producto?.nombre || 'Producto genérico' }}</td>
+                                <td class="text-right">{{ item.cantidad | number }}</td>
+                                <td class="text-right">S/ {{ item.monto | number:'1.2-2' }}</td>
+                                <td class="text-right">S/ {{ calcularMontoTotalPorProducto(item.cantidad, item.monto) | number:'1.2-2' }}</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" class="text-right font-weight-bold">Total a Pagar:</td>
+                                <td class="text-right font-weight-bold">S/ {{ obligacionSelected.monto | number:'1.2-2' }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
-        </div>
+        </ng-container>
+
 
         <!-- Sección 4: Documentos adjuntos -->
         <div *ngIf="obligacionSelected.pedido?.numeroGuia" class="mb-3">
@@ -358,6 +348,9 @@
                 </div>
             </div>
         </div>
-
     </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button mat-button (click)="dialogRef.close()">Cerrar</button>
+    </mat-dialog-actions>
 </ng-template>
