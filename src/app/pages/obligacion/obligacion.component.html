@@ -37,12 +37,12 @@
             </mat-form-field>
         </div>
 
-        <div class="col-md-3 mb-3">
-            <mat-form-field appearance="fill" class="w-100">
-                <mat-label>Buscar por Descripción</mat-label>
-                <input matInput [(ngModel)]="filter.descripcion" (input)="RG.text($event)" maxlength="200">
-            </mat-form-field>
-        </div>
+        <div class="col-md-6 mb-3">
+        <mat-form-field appearance="fill" class="w-100">
+            <mat-label>Buscar por Proveedor</mat-label>
+            <input matInput [(ngModel)]="filter.proveedorRazonSocial" (input)="RG.text($event)" maxlength="200">
+        </mat-form-field>
+      </div>
 
         <div class="col-md-3 d-flex justify-content-start align-items-center mb-3">
             <button class="btn btn-primary" (click)="search()" title="Buscar">
@@ -161,36 +161,52 @@
 <ng-template #registrarTemplate>
     <h2 mat-dialog-title>Registrar Obligación</h2>
     <mat-dialog-content class="mat-typography">
-        <!-- Información principal -->
-        <div class="row mb-4">
+    <!-- Información principal -->
+    <div class="row mb-4">
         <div class="col-md-6">
             <h3 class="section-title">Información de la Obligación</h3>
             <div class="detail-row">
-            <span class="detail-label">Código:</span>
-            <span class="detail-value">{{ record.codigo }}</span>
+                <span class="detail-label">Código: </span>
+                <span class="detail-value">{{ record.codigo }}</span>
             </div>
             <div class="detail-row">
-            <span class="detail-label">Fecha Registro:</span>
-            <span class="detail-value">{{ record.fechaRegistro | date: 'dd/MM/yyyy' }}</span>
+                <span class="detail-label">Estado actual: </span>
+                <span class="badge rounded-pill fw-semibold" 
+                        [class.text-bg-success]="record.estado?.id === 3"
+                        [class.text-bg-danger]="record.estado?.id !== 3"
+                        style="color: rgba(255,255,255,0.9) !important;">
+                    {{ record.estado?.descripcion }}
+                </span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Fecha Registro: </span>
+                <span class="detail-value">{{ record.fechaRegistro | date: 'dd/MM/yyyy' }}</span>
             </div>
         </div>
+
         <div class="col-md-6">
             <h3 class="section-title">Pedido Asociado</h3>
             <div class="detail-row">
-            <span class="detail-label">Código Pedido:</span>
-            <span class="detail-value">{{ record.pedido?.codigo || 'N/A' }}</span>
+                <span class="detail-label">Código Pedido: </span>
+                <span class="detail-value">{{ record.pedido?.codigo || 'N/A' }}</span>
             </div>
             <div class="detail-row">
-            <span class="detail-label">Proveedor:</span>
-            <span class="detail-value">{{ record.pedido?.proveedor?.razonSocial || 'N/A' }}</span>
+                <span class="detail-label">Proveedor: </span>
+                <span class="detail-value">{{ record.pedido?.proveedor?.razonSocial || 'N/A' }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">RUC: </span>
+                <span class="detail-value">{{ record.pedido?.proveedor?.ruc }}</span>
             </div>
         </div>
-        </div>
+        
+    </div>
 
         <!-- Campo editable: Descripción -->
-        <mat-form-field appearance="fill" class="w-100 mt-3">
-        <mat-label>Descripción</mat-label>
-        <textarea matInput [(ngModel)]="record.descripcion" name="descripcion" maxlength="500"></textarea>
+         <mat-form-field appearance="fill" class="w-100 mt-3">
+            <mat-label>Descripción</mat-label>
+            <textarea matInput [(ngModel)]="record.descripcion" name="descripcion" maxlength="500" required></textarea>
+            <mat-error *ngIf="!record.descripcion">La descripción es requerida</mat-error>
         </mat-form-field>
 
         <!-- Productos del Pedido -->
@@ -221,19 +237,7 @@
                     </tr>
                     <tr>
                         <td colspan="3" class="text-right font-weight-bold align-middle">Total a Cancelar:</td>
-                        <td class="text-right">
-                        <mat-form-field appearance="fill" class="w-100 m-0">
-                            <input
-                            matInput
-                            [(ngModel)]="record.monto"
-                            name="totalCancelar"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            required
-                            />
-                        </mat-form-field>
-                        </td>
+                        <td class="text-right font-weight-bold">S/ {{ record.monto | number:'1.2-2' }}</td>
                     </tr>
                     </tfoot>
                 </table>
@@ -244,9 +248,7 @@
     <!-- Acciones -->
     <mat-dialog-actions align="end">
         <button mat-button type="button" (click)="dialogRef.close()">Cancelar</button>
-        <button mat-raised-button color="primary" type="button" (click)="registrarPago()">
-            Registrar
-        </button>
+        <button mat-raised-button color="primary" type="button" (click)="registrarPago()" [disabled]="!record.descripcion">Registrar</button>
     </mat-dialog-actions>
 </ng-template>
 
@@ -275,13 +277,11 @@
                         S/ {{ obligacionSelected.monto | number:'1.2-2' }}
                     </span>
                 </div>
-                <div class="col-md-4">
-                    <div class="info-block">
-                        <div class="info-label">Fecha de Registro:</div>
-                        <div class="info-value">
-                            {{ obligacionSelected.fechaRegistro | date:'dd/MM/yyyy' }}
-                        </div>
-                    </div>
+                <div class="detail-row">
+                    <span class="detail-label">Fecha de Registro:</span>
+                    <span class="detail-value">
+                        {{ obligacionSelected.fechaRegistro | date:'dd/MM/yyyy' }}
+                    </span>
                 </div>
             </div>
 
@@ -296,9 +296,13 @@
                     <span class="detail-value">{{ obligacionSelected.pedido?.proveedor?.razonSocial || 'N/A' }}</span>
                 </div>
                 <div class="detail-row">
+                    <span class="detail-label">RUC: </span>
+                    <span class="detail-value">{{ obligacionSelected.pedido?.proveedor?.ruc }}</span>
+                </div>
+                <div class="detail-row">
                     <span class="detail-label">Nª Factura: </span>
                     <span class="detail-value">
-                        {{ obligacionSelected.pedido?.serieGuia }}-{{ obligacionSelected.pedido?.numeroFactura || 'Pendiente' }}
+                        {{ obligacionSelected.pedido?.numeroFactura || 'Pendiente' }}
                     </span>
                 </div>
             </div>
@@ -344,14 +348,7 @@
         <!-- Sección 4: Documentos adjuntos -->
         <div *ngIf="obligacionSelected.pedido?.numeroGuia" class="mb-3">
             <h3 class="section-title">Documentos Adjuntos</h3>
-            <div class="documents-grid">
-                <div class="document-item">
-                    <mat-icon class="document-icon">picture_as_pdf</mat-icon>
-                    <span class="document-name">Guía de remisión {{ obligacionSelected.pedido?.serieGuia}}-{{ obligacionSelected.pedido?.numeroGuia }}</span>
-                    <button mat-icon-button color="primary" (click)="verGuia(obligacionSelected.pedido?.id!)">
-                        <mat-icon>visibility</mat-icon>
-                    </button>
-                </div>
+            <div class="documents-grid">            
                 <div class="document-item">
                     <mat-icon class="document-icon">picture_as_pdf</mat-icon>
                     <span class="document-name">Factura {{ obligacionSelected.pedido?.numeroFactura}}</span>
@@ -363,11 +360,4 @@
         </div>
 
     </mat-dialog-content>
-
-    <mat-dialog-actions align="end">
-        <button mat-button mat-dialog-close>Cerrar</button>
-        <button mat-button color="primary" *ngIf="">
-            <mat-icon>check_circle</mat-icon> Contabilizar
-        </button>
-    </mat-dialog-actions>
 </ng-template>

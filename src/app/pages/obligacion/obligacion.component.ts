@@ -277,16 +277,6 @@ export class ObligacionComponent implements OnInit {
             return;
         }
 
-        if (!this.record.estado?.id) {
-            Swal.fire('Error', 'Seleccione un estado', 'error');
-            return;
-        }
-
-        if (!this.record.tipo?.id) {
-            Swal.fire('Error', 'Seleccione un tipo', 'error');
-            return;
-        }
-
         if (!this.record.monto || this.record.monto <= 0) {
             Swal.fire('Error', 'Ingrese un monto válido', 'error');
             return;
@@ -338,16 +328,6 @@ export class ObligacionComponent implements OnInit {
         }, error => {
             Swal.fire('Error', 'No se pudo cargar la factura', 'error');
         });        
-        }
-    
-    verGuia(pedidoId: number) {
-        this.service.verGuia(pedidoId).subscribe(blob => {
-        const url = window.URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        window.URL.revokeObjectURL(url);
-        }, error => {
-            Swal.fire('Error', 'No se pudo cargar la guía', 'error');
-        });
     }
 
     getEstadoDescripcion(estadoId?: number): string {
@@ -360,18 +340,6 @@ export class ObligacionComponent implements OnInit {
         return tipo?.nombre ?? 'No especificado';
     }
 
-    /*getPedidoDescripcion(pedidoId?: number): string {
-        const pedido = pedidoId ? this.listPedidos.find(p => p.id === pedidoId) : null;
-        return pedido ? `${pedido.codigo} - ${pedido.proveedor?.razonSocial}` : 'No especificado';
-
-        , pipe: { transform: (pedido: any) => {
-                if (!pedido) return 'No especificado';
-                    const codigo = pedido.codigo || '';
-                    const razonSocial = pedido.proveedor?.razonSocial || '';
-                    return `${codigo} - ${razonSocial}`;
-                }}
-    }*/
-
     private initTable() {
         this.columns = [
             { name: 'Nro.', prop: 'row', width: 20 },
@@ -379,7 +347,6 @@ export class ObligacionComponent implements OnInit {
             { name: 'Proveedor', prop: 'pedido.proveedor.razonSocial', width: 150},
             { name: 'Estado', prop: 'estado.descripcion', width: 120 },
             { name: 'Tipo', prop: 'tipo.nombre', width: 120 },
-            //{ name: 'Monto', prop: 'monto', pipe: { transform: (m: number) => `S/ ${m?.toFixed(2) || '0.00'}` }, width: 100 },
             { name: 'F. Registro', prop: 'fechaRegistro', pipe: { transform: (d: Date) => d ? new Date(d).toLocaleDateString() : '' }, width: 120 },
             { name: 'Acciones', cellTemplate: this.colAccionTemplate, width: 150 }
         ];
