@@ -25,7 +25,7 @@ import { PedidoResponse } from "../../model/api/response/PedidoResponse";
 import { PedidoService } from "../../service/gestion/pedido.service";
 
 @Component({
-    selector: 'app-obligacion-asistente-contable',
+    selector: 'app-obligacion-gerente-general',
     standalone: true,
     imports: [
         CommonModule,
@@ -39,11 +39,11 @@ import { PedidoService } from "../../service/gestion/pedido.service";
         FormsModule,
         MatIconModule
     ],
-    templateUrl: './obligacion-asistente-contable.component.html',
-    styleUrl: './obligacion-asistente-contable.component.css'
+    templateUrl: './obligacion-gerente-general.component.html',
+    styleUrl: './obligacion-gerente-general.component.css'
 })
 
-export class ObligacionAsistenteContableComponent implements OnInit {
+export class ObligacionGerenteGeneralComponent implements OnInit {
     public RG = RegexConstants;
     result: ObligacionResponse[] = [];
     filter: ObligacionRequest = {};
@@ -102,7 +102,7 @@ export class ObligacionAsistenteContableComponent implements OnInit {
     }
 
     search() {
-        this.filter.estadoId = ESTADO_OBLIGACION.GENERADO_AUTOMATICO; // Por defecto, mostrar solo pedidos con estado "GENERADO
+        this.filter.estadoId = ESTADO_OBLIGACION.APROBADO; // Por defecto, mostrar solo pedidos con estado "GENERADO
         console.log('filter', this.filter);
         this.service.list(this.filter).subscribe({
             next: (resultResponse) => {
@@ -141,7 +141,7 @@ export class ObligacionAsistenteContableComponent implements OnInit {
                 }
 
                 if (item.id !== undefined) {
-                    this.service.changeStatus({ id: item.id, estadoId: ESTADO_OBLIGACION.PENDIENTE_CONTABILIZAR }).subscribe({
+                    this.service.changeStatus({ id: item.id, estadoId: ESTADO_OBLIGACION.PAGO_CONTABILIZAR }).subscribe({
                         next: () => {
                             Swal.fire('Éxito', 'Obligación aceptada', 'success');
                             this.search();
@@ -224,7 +224,7 @@ export class ObligacionAsistenteContableComponent implements OnInit {
             cancelButtonText: 'Cancelar'
         }).then((result) => {
             if (result.isConfirmed) {
-                this.service.changeStatus({ id: item.id, estadoId: ESTADO_OBLIGACION.OBSERVADO_DOCUMENTOS }).subscribe({
+                this.service.changeStatus({ id: item.id, estadoId: ESTADO_OBLIGACION.ENVIADO_APROBACION }).subscribe({
                     next: () => {
                         Swal.fire('Éxito', 'Obligación rechazada', 'success');
                         this.search();
