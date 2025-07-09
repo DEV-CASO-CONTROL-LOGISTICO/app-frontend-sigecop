@@ -18,11 +18,12 @@ import { EstadoObligacionResponse } from "../../model/api/response/EstadoObligac
 import { ObligacionService } from "../../service/gestion/obligacion.service";
 import { EstadoObligacionService } from "../../service/gestion/estadoObligacion.service";
 import Swal from "sweetalert2";
-import { convertirIsoADDMMAAAA, setListRow } from "../../util/methods";
+import { calcularTotal, convertirIsoADDMMAAAA, handleError, setListRow } from "../../util/methods";
 import { TipoObligacionService } from "../../service/master/tipoObligacion.service";
 import { TipoObligacionResponse } from "../../model/api/response/TipoObligacionResponse";
 import { PedidoResponse } from "../../model/api/response/PedidoResponse";
 import { PedidoService } from "../../service/gestion/pedido.service";
+
 
 @Component({
     selector: 'app-obligacion-asistente-contable',
@@ -107,7 +108,23 @@ export class ObligacionAsistenteContableComponent implements OnInit {
         this.service.list(this.filter).subscribe({
             next: (resultResponse) => {
                 this.result = [...setListRow(resultResponse)];
-                this.initTable();
+                this.filter.estadoId = ESTADO_OBLIGACION.PAGO_CONTABILIZAR;
+                this.service.list(this.filter).subscribe({
+                    next: (resultResponse) => {
+                        this.result = this.result.concat([...setListRow(resultResponse)]);
+                        this.initTable();
+                        this.filter = {};
+                    },
+                    error: (err) => {
+                        Swal.close();
+                        Swal.fire({
+                            icon: 'warning',
+                            title: '¡Advertencia!',
+                            text: err.error,
+                        });
+                    }
+                });
+                //this.initTable();
             },
             error: (err) => {
                 Swal.close();
@@ -125,7 +142,9 @@ export class ObligacionAsistenteContableComponent implements OnInit {
         this.dialogRef = this.dialog.open(this.dialogTemplate, { width: '800px' });
     }
 
+
     openEnviar(item: ObligacionResponse) {
+        let estadoCambio = 0;
         Swal.fire({
             title: 'Confirmar Aceptación de Obligación',
             text: `¿Está seguro de aceptar la obligación ${item.codigo}?`,
@@ -137,11 +156,17 @@ export class ObligacionAsistenteContableComponent implements OnInit {
             if (result.isConfirmed) {
                  
                 if (item.estado) {
-                    item.estado.id = 0;
+                    //item.estado.id = 0;
+                    if(item.estado.id == ESTADO_OBLIGACION.GENERADO_AUTOMATICO){
+                        estadoCambio = ESTADO_OBLIGACION.PENDIENTE_CONTABILIZAR;
+                    }
+                    if(item.estado.id == ESTADO_OBLIGACION.PAGO_CONTABILIZAR){
+                        estadoCambio = ESTADO_OBLIGACION.PAGO_REGISTRADO;
+                    }
                 }
 
                 if (item.id !== undefined) {
-                    this.service.changeStatus({ id: item.id, estadoId: ESTADO_OBLIGACION.PENDIENTE_CONTABILIZAR }).subscribe({
+                    this.service.changeStatus({ id: item.id, estadoId: estadoCambio }).subscribe({
                         next: () => {
                             Swal.fire('Éxito', 'Obligación aceptada', 'success');
                             this.search();
@@ -159,9 +184,31 @@ export class ObligacionAsistenteContableComponent implements OnInit {
     }
 
     openDetalleObligacion(item: ObligacionResponse) {
-        this.service.find({ id: item.id }).subscribe({
-            next: (resultResponse) => {
-                this.obligacionSelected = resultResponse;
+        this.obligacionSelected = {} as ObligacionResponse;
+
+        forkJoin({
+            resultResponse: this.service.find({ id: item.id })
+        }).subscribe({
+            next: ({ resultResponse }) => {
+                this.obligacionSelected = {
+                    ...resultResponse,
+                    pedido: {
+                        ...resultResponse.pedido,
+                        pedidoProducto: (resultResponse.pedido?.pedidoProducto ?? []).map((pp, index) => ({
+                            row: index + 1,
+                            id: pp.id,
+                            producto: {
+                                id: pp.producto?.id,
+                                nombre: pp.producto?.nombre,
+                                precioUnitario: pp.producto?.precioUnitario
+                            },
+                            cantidad: pp.cantidad,
+                            monto: pp.monto
+                        }))
+                    }
+                };
+
+                this.dialogRef = this.dialog.open(this.detalleObligacionTemplate, { width: '800px' });
             },
             error: (err) => {
                 Swal.close();
@@ -172,8 +219,6 @@ export class ObligacionAsistenteContableComponent implements OnInit {
                 });
             }
         });
-    
-        this.dialogRef = this.dialog.open(this.detalleObligacionTemplate, { width: '800px' });
     }
 
     save() {
@@ -215,26 +260,44 @@ export class ObligacionAsistenteContableComponent implements OnInit {
     }
 
     openRechazar(item: ObligacionResponse) {
+        let estadoCambio = 0;
+        if (item.estado) {
+            if(item.estado.id == ESTADO_OBLIGACION.GENERADO_AUTOMATICO){
+                estadoCambio = ESTADO_OBLIGACION.OBSERVADO_DOCUMENTOS;
+            }
+            if(item.estado.id == ESTADO_OBLIGACION.PAGO_CONTABILIZAR){
+                estadoCambio = ESTADO_OBLIGACION.APROBADO;
+            }
+        }
+
         Swal.fire({
             title: 'Confirmar Rechazar Obligación',
             text: `¿Está seguro de rechazar la obligación ${item.codigo}?`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sí, rechazar',
-            cancelButtonText: 'Cancelar'
+            cancelButtonText: 'Cancelar',
+            input: 'text'
         }).then((result) => {
+            console.log(result.value);
+            
             if (result.isConfirmed) {
-                this.service.changeStatus({ id: item.id, estadoId: ESTADO_OBLIGACION.OBSERVADO_DOCUMENTOS }).subscribe({
-                    next: () => {
-                        Swal.fire('Éxito', 'Obligación rechazada', 'success');
-                        this.search();
-                        this.cdr.detectChanges();
-                    },
-                    error: (err) => {
-                        this.handleError(err);
-                    }
-                });
+                if (result.value === undefined || result.value === '') {
+                    Swal.fire('Error', 'Colocar un comentario para el rechazo', 'error');
+                } else {
+                    this.service.changeStatus({ id: item.id, estadoId: estadoCambio, comentario: result.value }).subscribe({
+                        next: () => {
+                            Swal.fire('Éxito', 'Obligación rechazada', 'success');
+                            this.search();
+                            this.cdr.detectChanges();
+                        },
+                        error: (err) => {
+                            this.handleError(err);
+                        }
+                    });
+                }
             }
+            
         });
     }
 
@@ -270,4 +333,20 @@ export class ObligacionAsistenteContableComponent implements OnInit {
             { name: 'Acciones', cellTemplate: this.colAccionTemplate, width: 150 }
         ];
     }
+
+    verFactura(pedidoId: number) {
+        this.service.verFactura(pedidoId).subscribe(blob => {
+        const url = window.URL.createObjectURL(blob);
+            
+        window.open(url, '_blank');
+        window.URL.revokeObjectURL(url);
+        console.log('URL de la solicitud:', url);
+        }, error => {
+            Swal.fire('Error', 'No se pudo cargar la factura', 'error');
+        });        
+    }
+    calcularMontoTotalPorProducto(cantidad: number | null | undefined, precioUnitario: number | null | undefined): number | null {
+            return calcularTotal(cantidad, precioUnitario);
+    }
 }
+

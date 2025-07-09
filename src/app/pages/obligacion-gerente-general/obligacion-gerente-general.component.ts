@@ -18,7 +18,7 @@ import { EstadoObligacionResponse } from "../../model/api/response/EstadoObligac
 import { ObligacionService } from "../../service/gestion/obligacion.service";
 import { EstadoObligacionService } from "../../service/gestion/estadoObligacion.service";
 import Swal from "sweetalert2";
-import { convertirIsoADDMMAAAA, setListRow } from "../../util/methods";
+import { calcularTotal, convertirIsoADDMMAAAA, handleError, setListRow } from "../../util/methods";
 import { TipoObligacionService } from "../../service/master/tipoObligacion.service";
 import { TipoObligacionResponse } from "../../model/api/response/TipoObligacionResponse";
 import { PedidoResponse } from "../../model/api/response/PedidoResponse";
@@ -159,9 +159,31 @@ export class ObligacionGerenteGeneralComponent implements OnInit {
     }
 
     openDetalleObligacion(item: ObligacionResponse) {
-        this.service.find({ id: item.id }).subscribe({
-            next: (resultResponse) => {
-                this.obligacionSelected = resultResponse;
+        this.obligacionSelected = {} as ObligacionResponse;
+
+        forkJoin({
+            resultResponse: this.service.find({ id: item.id })
+        }).subscribe({
+            next: ({ resultResponse }) => {
+                this.obligacionSelected = {
+                    ...resultResponse,
+                    pedido: {
+                        ...resultResponse.pedido,
+                        pedidoProducto: (resultResponse.pedido?.pedidoProducto ?? []).map((pp, index) => ({
+                            row: index + 1,
+                            id: pp.id,
+                            producto: {
+                                id: pp.producto?.id,
+                                nombre: pp.producto?.nombre,
+                                precioUnitario: pp.producto?.precioUnitario
+                            },
+                            cantidad: pp.cantidad,
+                            monto: pp.monto
+                        }))
+                    }
+                };
+
+                this.dialogRef = this.dialog.open(this.detalleObligacionTemplate, { width: '800px' });
             },
             error: (err) => {
                 Swal.close();
@@ -172,8 +194,6 @@ export class ObligacionGerenteGeneralComponent implements OnInit {
                 });
             }
         });
-    
-        this.dialogRef = this.dialog.open(this.detalleObligacionTemplate, { width: '800px' });
     }
 
     save() {
@@ -221,9 +241,13 @@ export class ObligacionGerenteGeneralComponent implements OnInit {
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Sí, rechazar',
-            cancelButtonText: 'Cancelar'
+            cancelButtonText: 'Cancelar',
+            input: 'text'
         }).then((result) => {
             if (result.isConfirmed) {
+              if (result.value === undefined || result.value === '') {
+                  Swal.fire('Error', 'Colocar un comentario para el rechazo', 'error');
+              } else {
                 this.service.changeStatus({ id: item.id, estadoId: ESTADO_OBLIGACION.ENVIADO_APROBACION }).subscribe({
                     next: () => {
                         Swal.fire('Éxito', 'Obligación rechazada', 'success');
@@ -235,6 +259,7 @@ export class ObligacionGerenteGeneralComponent implements OnInit {
                     }
                 });
             }
+          }
         });
     }
 
@@ -269,5 +294,19 @@ export class ObligacionGerenteGeneralComponent implements OnInit {
             { name: 'F. Registro', prop: 'fechaRegistro', pipe: { transform: (d: Date) => d ? new Date(d).toLocaleDateString() : '' }, width: 120 },
             { name: 'Acciones', cellTemplate: this.colAccionTemplate, width: 150 }
         ];
+    }
+    verFactura(pedidoId: number) {
+        this.service.verFactura(pedidoId).subscribe(blob => {
+        const url = window.URL.createObjectURL(blob);
+            
+        window.open(url, '_blank');
+        window.URL.revokeObjectURL(url);
+        console.log('URL de la solicitud:', url);
+        }, error => {
+            Swal.fire('Error', 'No se pudo cargar la factura', 'error');
+        });        
+    }
+    calcularMontoTotalPorProducto(cantidad: number | null | undefined, precioUnitario: number | null | undefined): number | null {
+            return calcularTotal(cantidad, precioUnitario);
     }
 }

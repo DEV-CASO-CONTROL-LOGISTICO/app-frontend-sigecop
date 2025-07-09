@@ -143,67 +143,114 @@
     </mat-dialog-content>
 </ng-template>
 
-<!-- Dialogo para Detalle de Obligación -->
 <ng-template #detalleObligacionTemplate>
     <h2 mat-dialog-title>Detalle de Obligación #{{obligacionSelected.codigo}}</h2>
-    <mat-dialog-content class="factura-content">
-        <div class="row mb-3">
-            <div class="col-12">
-                <h4>Información General</h4>
-            </div>
-
-            <div class="col-md-4">
-                <div class="info-block">
-                    <div class="info-label">Código:</div>
-                    <div class="info-value">{{ obligacionSelected.codigo }}</div>
+    <mat-dialog-content class="mat-typography">
+        
+        <!-- Sección 1: Datos principales -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h3 class="section-title">Información de la Obligación</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Estado:</span>
+                    <span class="badge rounded-pill fw-semibold" 
+                        [class.text-bg-success]="obligacionSelected.estado?.id === 3"
+                        [class.text-bg-danger]="obligacionSelected.estado?.id !== 3"
+                        style="color: rgba(255,255,255,0.9) !important;">
+                    {{ getEstadoDescripcion(obligacionSelected.estado?.id) }}
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Monto:</span>
+                    <span class="detail-value font-weight-bold text-primary">
+                        S/ {{ obligacionSelected.monto | number:'1.2-2' }}
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Fecha de Registro:</span>
+                    <span class="detail-value">
+                        {{ obligacionSelected.fechaRegistro | date:'dd/MM/yyyy' }}
+                    </span>
                 </div>
             </div>
 
-            <div class="col-md-4">
-                <div class="info-block">
-                    <div class="info-label">Estado:</div>
-                    <div class="info-value">{{ getEstadoDescripcion(obligacionSelected.estado?.id) }}</div>
+            <div class="col-md-6">
+                <h3 class="section-title">Pedido Asociado</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Código: </span>
+                    <span class="detail-value">{{ obligacionSelected.pedido?.codigo || 'N/A' }}</span>
                 </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="info-block">
-                    <div class="info-label">Tipo:</div>
-                    <div class="info-value">{{ getTipoDescripcion(obligacionSelected.tipo?.id) }}</div>
+                <div class="detail-row">
+                    <span class="detail-label">Proveedor: </span>
+                    <span class="detail-value">{{ obligacionSelected.pedido?.proveedor?.razonSocial || 'N/A' }}</span>
                 </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="info-block">
-                    <div class="info-label">Pedido:</div>
-                    <div class="info-value">{{ obligacionSelected.pedido?.codigo }}</div>
+                <div class="detail-row">
+                    <span class="detail-label">RUC: </span>
+                    <span class="detail-value">{{ obligacionSelected.pedido?.proveedor?.ruc }}</span>
                 </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="info-block">
-                    <div class="info-label">Fecha de Registro:</div>
-                    <div class="info-value">{{ convertirFecha(obligacionSelected.fechaRegistro) }}</div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="info-block">
-                    <div class="info-label">Monto:</div>
-                    <div class="info-value">S/ {{ obligacionSelected.monto | number:'1.2-2' }}</div>
+                <div class="detail-row">
+                    <span class="detail-label">Nª Factura: </span>
+                    <span class="detail-value">
+                        {{ obligacionSelected.pedido?.numeroFactura || 'Pendiente' }}
+                    </span>
                 </div>
             </div>
         </div>
 
-        <div class="col-12">
-            <div class="info-block">
-                <div class="info-label">Descripción:</div>
-                <div class="info-value">{{ obligacionSelected.descripcion }}</div>
+        <div class="mb-4" *ngIf="obligacionSelected.comentario">
+            <h3 class="section-title">Motivo Rechazo</h3>
+            <p class="description-text" style="color: rgba(222, 16, 16, 0.9) !important;">{{ obligacionSelected.comentario || '' }}</p>
+        </div>
+        <!-- Sección 2: Descripción -->
+        <div class="mb-4">
+            <h3 class="section-title">Descripción</h3>
+            <p class="description-text">{{ obligacionSelected.descripcion || 'Pago pendiente de especificar' }}</p>
+        </div>
+
+        <!-- Sección 3: Productos del pedido -->
+        <div *ngIf="obligacionSelected.pedido?.pedidoProducto?.length" class="mt-4">
+            <h3 class="section-title">Productos incluidos</h3>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-right">Cantidad</th>
+                            <th class="text-right">P. Unitario</th>
+                            <th class="text-right">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let item of obligacionSelected.pedido?.pedidoProducto">
+                            <td>{{ item.producto?.nombre || 'Producto genérico' }}</td>
+                            <td class="text-right">{{ item.cantidad | number }}</td>
+                            <td class="text-right">S/ {{ item.monto | number:'1.2-2' }}</td>
+                            <td class="text-right">S/ {{ calcularMontoTotalPorProducto(item.cantidad, item.monto) | number:'1.2-2' }}</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-right font-weight-bold">Total a Pagar:</td>
+                            <td class="text-right font-weight-bold">S/ {{ obligacionSelected.monto | number:'1.2-2' }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
         </div>
+
+        <!-- Sección 4: Documentos adjuntos -->
+        <div *ngIf="obligacionSelected.pedido?.numeroGuia" class="mb-3">
+            <h3 class="section-title">Documentos Adjuntos</h3>
+            <div class="documents-grid">            
+                <div class="document-item">
+                    <mat-icon class="document-icon">picture_as_pdf</mat-icon>
+                    <span class="document-name">Factura {{ obligacionSelected.pedido?.numeroFactura}}</span>
+                    <button mat-icon-button color="primary" (click)="verFactura(obligacionSelected.pedido?.id!)">
+                        <mat-icon>visibility</mat-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </mat-dialog-content>
-
-    <mat-dialog-actions align="end">
-        <button mat-button (click)="dialogRef.close()">Cerrar</button>
-    </mat-dialog-actions>
 </ng-template>

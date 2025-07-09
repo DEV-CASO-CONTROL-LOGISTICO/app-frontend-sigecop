@@ -13,4 +13,5 @@ export class ObligacionRequest extends ClassGeneric{
     monto?: number;
     fechaRegistro?: Date;
     proveedorRazonSocial?: string;
+    comentario?: string;
 }

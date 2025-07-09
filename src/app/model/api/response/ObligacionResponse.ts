@@ -23,4 +23,5 @@ export class ObligacionResponse extends ClassGeneric {
     esGenerado?: Boolean;         
     esPendiente?: Boolean; 
     pedido?: PedidoResponse;
+    comentario?: string;
 }
